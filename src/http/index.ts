@@ -1,31 +1,38 @@
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+import { TokenStorage } from '@/utils/tokenStorage'
 
-const request = axios.create({
-    baseURL: process.env.VUE_APP_BASE_API, // 从环境变量读取基础地址
-    timeout: 15000 // 请求超时时间
+const instance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE || 'https://api.example.com',
+  timeout: 10000,
 })
 
-// Request interceptors
-request.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-        // do something
-        return config;
-    },
-    (error: any) => {
-        Promise.reject(error);
+// 请求拦截器
+instance.interceptors.request.use(
+  (config) => {
+    const token = TokenStorage.getAccessToken()
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`
     }
-);
+    return config
+  },
+  (error) => Promise.reject(error)
+)
 
-// Response interceptors
-request.interceptors.response.use(
-    async (response: AxiosResponse) => {
-        // do something
-        return response;
-    },
-    (error: any) => {
-        // do something
-        return Promise.reject(error);
+// 响应拦截器
+instance.interceptors.response.use(
+  (response) => {
+    const res = response.data
+    if (!res.isSuccess) {
+      ElMessage.error(res.message || '请求失败')
+      return Promise.reject(res)
     }
-);
+    return res
+  },
+  (error) => {
+    ElMessage.error(error?.response?.data?.message || '网络异常')
+    return Promise.reject(error)
+  }
+)
 
-export default request;
+export default instance
