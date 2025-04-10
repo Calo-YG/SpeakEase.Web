@@ -1,4 +1,4 @@
-interface IResponseType<P = {}> {
+export interface IResponseType<P = {}> {
     status?: number;
     isSuccess: boolean;
     message: string;
