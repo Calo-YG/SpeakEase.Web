@@ -4,6 +4,9 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import VueSetupExtend from 'vite-plugin-vue-setup-extend'
 import { resolve } from 'path'
 import { createStyleImportPlugin } from 'vite-plugin-style-import'
+import Components from 'unplugin-vue-components/vite';
+import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
+
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -21,7 +24,14 @@ export default defineConfig({
               ensureStyleFile: true // 忽略文件是否存在, 导入不存在的CSS文件时防止错误。
           }
       ]
-  })],
+  }),
+  Components({
+    resolvers: [
+      AntDesignVueResolver({
+        importStyle: false, // css in js
+      }),
+    ],
+  }),],
   resolve: {
     alias: [
       {
@@ -44,5 +54,7 @@ export default defineConfig({
             rewrite: (path: string) => path.replace(/^\/api/, '')
         }
     }
-}
-})
+}})
+// Removed the incorrect AntDesignVueResolver function implementation as it is now imported.
+
+

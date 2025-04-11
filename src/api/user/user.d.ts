@@ -5,27 +5,27 @@ export interface CreateUserRequest {
     /**
      * 邮箱
      */
-    email?: null | string;
+    email:string;
     /**
      * 用户密码
      */
-    password?: null | string;
+    password:string;
     /**
      * 唯一键
      */
-    unquneId?: null | string;
+    unquneId:string;
     /**
      * 用户账号
      */
-    userAccount?: null | string;
+    userAccount:string;
     /**
      * 昵称
      */
-    userName?: null | string;
+    userName:string;
     /**
      * 验证码
      */
-    verificationCode?: null | string;
+    verificationCode:string;
 }
 
 /**
@@ -35,15 +35,15 @@ export interface UpdateUserRequest {
     /**
      * 旧密码
      */
-    oldPassword?: null | string;
+    oldPassword:string;
     /**
      * 密码
      */
-    password?: null | string;
+    password:string;
     /**
      * 用户id
      */
-    userId?: number;
+    userId:number;
 }
 
 /**
@@ -53,23 +53,23 @@ export interface UserResponse {
     /**
      * 头像
      */
-    avatar?: null | string;
+    avatar:string;
     /**
      * 邮箱
      */
-    email?: null | string;
+    email:string;
     /**
      * 用户手机
      */
-    phone?: null | string;
+    phone:string;
     /**
      * 用户id
      */
-    userId?: number;
+    userId: number;
     /**
      * 用户名
      */
-    userName?: null | string;
+    userName:string;
 }
 
 /**
@@ -79,19 +79,19 @@ export interface UserSettingRequest {
     /**
      * 账户是否处于激活状态
      */
-    accountActive?: boolean;
+    accountActive: boolean;
     /**
      * 是否允许接收私信
      */
-    allowMessages?: boolean;
+    allowMessages: boolean;
     /**
      * 个人简介
      */
-    bio?: null | string;
+    bio:string;
     /**
      * 生日
      */
-    birthday?: Date | null;
+    birthday: Date | null;
     /**
      * 性别
      */

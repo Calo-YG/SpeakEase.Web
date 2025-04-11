@@ -1,21 +1,18 @@
-export interface TokenInfo {
-    token: string;
-    refreshToken: string;
-  }
+  import type {TokenResponse} from '@/api/auth/auth'
   
   const TOKEN_KEY = 'user_token'
   
   export const TokenStorage = {
     /** 保存 token 到 localStorage */
-    setToken(tokenInfo: TokenInfo): void {
+    setToken(tokenInfo: TokenResponse): void {
       localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenInfo));
     },
   
     /** 从 localStorage 获取 token 信息 */
-    getToken(): TokenInfo | null {
+    getToken(): TokenResponse | null {
       const tokenString = localStorage.getItem(TOKEN_KEY);
       try {
-        return tokenString ? JSON.parse(tokenString) as TokenInfo : null;
+        return tokenString ? JSON.parse(tokenString) as TokenResponse : null;
       } catch {
         return null;
       }

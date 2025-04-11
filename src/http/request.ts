@@ -3,12 +3,12 @@ import type { AxiosRequestConfig } from 'axios'
 import type { IResponseType } from '@/http/response'
 
 // 通用 request 方法
-const request = <T = any>(config: AxiosRequestConfig): Promise<IResponseType<T>> => {
+const request = <T = any>(config: AxiosRequestConfig): Promise<T> => {
   return axiosInstance.request(config)
 }
 
 // GET 封装
-const get = <T = any>(url: string, params?: any): Promise<IResponseType<T>> => {
+const get = <T = any>(url: string, params?: any): Promise<T> => {
   return request<T>({
     url,
     method: 'get',
@@ -17,7 +17,7 @@ const get = <T = any>(url: string, params?: any): Promise<IResponseType<T>> => {
 }
 
 // POST 封装
-const post = <T = any>(url: string, data?: any): Promise<IResponseType<T>> => {
+const post = <T = any>(url: string, data?: any): Promise<T> => {
   return request<T>({
     url,
     method: 'post',
@@ -35,7 +35,7 @@ const uploadFile = async (
     file: File,
     uploadUrl: string,
     extraData?: Record<string, string>
-  ): Promise<IResponseType<string>> => {
+  ): Promise<IResponseType<void>> => {
     const formData = new FormData()
     formData.append('file', file)
   

@@ -1,6 +1,5 @@
 import type {LoginRequest,VerificationCodeResponse, TokenResponse} from '@/api/auth/auth'
 import request from '@/http/request'
-import { IResponseType } from '@/http/response'
 // Removed unused 'get' import from 'http'
 
 const URL={
@@ -10,8 +9,8 @@ const URL={
 }
 
 
-const login = (data:LoginRequest) => request.post<IResponseType<TokenResponse>>(URL.Login,data)
-const verify = (param: string) => request.get<IResponseType<VerificationCodeResponse>>(URL.Verify + param);
+const login = (data:LoginRequest) => request.post<TokenResponse>(URL.Login,data)
+const verify = (param: string) => request.get<VerificationCodeResponse>(URL.Verify + param);
 const loginOut = ()=> request.post(URL.LogingOut);
 
 export {login,verify,loginOut}

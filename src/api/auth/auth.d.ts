@@ -5,11 +5,11 @@ export interface VerificationCodeResponse {
     /**
      * 唯一id
      */
-    uniqueId?: null | string;
+    uniqueId: string;
     /**
      * 验证吗
      */
-    verificationCode?: null | string;
+    verificationCode: string;
 }
 
 /**
@@ -19,19 +19,19 @@ export interface LoginRequest {
     /**
      * 验证码
      */
-    code?: null | string;
+    code:  string;
     /**
      * 用户密码
      */
-    password?: null | string;
+    password: string;
     /**
      * 唯一键
      */
-    uniqueId?: null | string;
+    uniqueId:  string;
     /**
      * 用户账号
      */
-    userAccount?: null | string;
+    userAccount:  string;
 }
 
 /**
@@ -41,9 +41,9 @@ export interface TokenResponse {
     /**
      * 刷新token
      */
-    refreshToken?: null | string;
+    refreshToken: string;
     /**
      * token
      */
-    token?: null | string;
+    token:  string;
 }

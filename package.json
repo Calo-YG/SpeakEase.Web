@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:test": "vite build --mode test",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview",
     "eslint:comment": "使用 ESLint 检查并自动修复 src 目录下所有扩展名为 .js 和 .vue 的文件",
     "eslint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
@@ -15,6 +17,7 @@
     "commit": "git-cz"
   },
   "dependencies": {
+    "ant-design-vue": "4.x",
     "axios": "^1.8.4",
     "element-plus": "^2.9.7",
     "pinia": "^3.0.2",
@@ -32,6 +35,7 @@
     "@vue/tsconfig": "^0.7.0",
     "commitizen": "^4.3.1",
     "commitlint-config-cz": "^0.13.3",
+    "consola": "^3.4.2",
     "cz-conventional-changelog": "^3.3.0",
     "cz-customizable": "^7.4.0",
     "eslint": "^9.24.0",
@@ -41,6 +45,7 @@
     "less": "^4.3.0",
     "prettier": "^3.5.3",
     "typescript": "~5.7.2",
+    "unplugin-vue-components": "^28.4.1",
     "vite": "^6.2.0",
     "vite-plugin-style-import": "^2.0.0",
     "vite-plugin-vue-setup-extend": "^0.4.0",

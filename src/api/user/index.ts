@@ -20,22 +20,22 @@ const URL = {
 };
 
 const register = (data: CreateUserRequest) => 
-    request.post<IResponseType<void>>(URL.Register, data);
+    request.post<void>(URL.Register, data);
 
 const modifyPassword = (data: UpdateUserRequest) => 
-    request.post<IResponseType<void>>(URL.ModifyPassword, data);
+    request.post<void>(URL.ModifyPassword, data);
 
 const getUser = () => 
-    request.get<IResponseType<UserResponse>>(URL.GetUser);
+    request.get<UserResponse>(URL.GetUser);
 
 const createUserSetting = (data: UserSettingRequest) => 
     request.post<IResponseType<void>>(URL.CreateUserSetting, data);
 
 const updateUserSetting = (data: UserSettingUpdateRequest) => 
-    request.post<IResponseType<void>>(URL.UpdateUserSetting, data);
+    request.post<void>(URL.UpdateUserSetting, data);
 
 const getUserSetting = () => 
-    request.get<IResponseType<UserSettingResponse>>(URL.GetUserSetting);
+    request.get<UserSettingResponse>(URL.GetUserSetting);
 
 const uploadAvatar = (file: File,extraData:Record<string, string>) => request.uploadFile(file,URL.UploadAvatar,extraData);
 
