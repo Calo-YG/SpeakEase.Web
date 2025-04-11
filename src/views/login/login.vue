@@ -1,110 +1,150 @@
 <template>
-    <div class="login-card">
-      <div class="column">
-        <h1>登陆</h1>
-        <p>SpeakEase 让说和表达更简单</p>
-        <form>
-          <div class="form-item">
-            <input type="text" class="form-element" placeholder="用户名" />
-          </div>
-          <div class="form-item">
-            <input type="password" class="form-element" placeholder="密码" />
-          </div>
-          <div class="form-item">
-            <input type="password" class="form-element" placeholder="验证码" />
-            <img :src="codeBase64">
-          </div>
-          <div class="flex">
-            <button type="button" @click="handleLogin()">登 录</button>
-            <a href="#">忘记密码，点我重置！</a>
-          </div>
-          <!-- <p style="margin-top: 3rem; margin-bottom: 1.5rem">第三方账号登入</p>
-          <div class="social-buttons">
-            <a href="#" class="wechat">
-              <i class="bi bi-wechat"></i>
-            </a>
-            <a href="#" class="twitter">
-              <i class="bi bi-twitter"></i>
-            </a>
-            <a href="#" class="github">
-              <i class="bi bi-github"></i>
-            </a>
-          </div> -->
-        </form>
-      </div>
-      <div class="column">
-        <h2>自然选择号欢迎您登舰！</h2>
-        <p>如果你没有账号，你想要现在注册一个吗？</p>
-        <a href="#">注册</a>
-      </div>
-    </div>
-    
+  <div>
+    <a-row class="login-row" justify="center">
+      <!-- 左侧：背景图片展示（大屏显示，小屏隐藏） -->
+      <a-col :xs="0" :sm="0" :md="14" :lg="16" class="login-image-column">
+        <div class="image-container">
+          <a-image
+            src="/src/assets/bg.webp"
+            alt="登录背景"
+            class="login-background"
+          />
+        </div>
+      </a-col>
+
+      <!-- 右侧：登录表单 -->
+      <a-col :xs="24" :sm="24" :md="10" :lg="8" class="login-form-column">
+        <a-card class="login-card" bordered>
+          <div class="login-title">欢迎登录</div>
+          <a-form
+            :model="form"
+            :rules="rules"
+            ref="formRef"
+            layout="vertical"
+            @finish="handleLogin()"
+          >
+            <a-form-item label="用户名" name="username">
+              <a-input
+                v-model:value="form.userAccount"
+                placeholder="请输入用户名"
+              />
+            </a-form-item>
+
+            <a-form-item label="密码" name="password">
+              <a-input-password
+                v-model:value="form.password"
+                placeholder="请输入密码"
+              />
+            </a-form-item>
+
+            <a-form-item label="验证码" name="captcha">
+              <div class="captcha-wrapper">
+                <a-input v-model:value="form.code" placeholder="请输入验证码" />
+                <a-image
+                  :src="codeBase64"
+                  alt="验证码"
+                  width="100"
+                  height="32"
+                  class="captcha-image"
+                  @click="refreshCaptcha"
+                  preview="false"
+                />
+              </div>
+            </a-form-item>
+
+            <a-form-item>
+              <a-button
+                type="primary"
+                html-type="submit"
+                block
+                :loading="loading"
+              >
+                登录
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+      </a-col>
+    </a-row>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref ,onMounted} from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import type {LoginRequest} from '@/api/auth/auth'
-import {login,verify} from '@/api/auth/index'
-import { notification } from 'ant-design-vue';
-import { TokenStorage } from '@/utils/tokenStorage'
-
+import type { LoginRequest } from "@/api/auth/auth";
+import { login, verify } from "@/api/auth/index";
+import { notification } from "ant-design-vue";
+import { TokenStorage } from "@/utils/tokenStorage";
 
 const router = useRouter();
-
 const form = ref<LoginRequest>({
   code: "",
   password: "",
-  uniqueId:"",
-  userAccount:""
+  uniqueId: "",
+  userAccount: "",
 });
-const codeBase64 = ref("")
 
+const formRef = ref();
+const codeBase64 = ref("");
+const loading = ref(false);
 
-onMounted(()=>{
-    initVerify()
-})
+const rules = {
+  username: [
+    { required: true, message: "请输入用户名", trigger: "blur" },
+    { min: 3, max: 16, message: "用户名长度应为 3-16 个字符", trigger: "blur" },
+  ],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, max: 20, message: "密码长度应为 6-20 个字符", trigger: "blur" },
+  ],
+  captcha: [
+    { required: true, message: "请输入验证码", trigger: "blur" },
+    { len: 4, message: "验证码应为 4 位字符", trigger: "blur" },
+  ],
+};
 
-function handleLogin(){
-   const formValue = form.value;
+onMounted(() => {
+  initVerify();
+});
 
-   if(!!formValue.password){
-    openNotification("what arey you doing","请输入账号")
-    return;
-   }
-
-   if(!!formValue.password){
-    openNotification("what arey you doing","请输入密码")
-    return;
-   }
-
-   if(!!formValue.code){
-    openNotification("what arey you doing","请输入验证码")
-    return;
-   }
-
-   login(form.value).then(res=>{
-     TokenStorage.setToken(res)
-   })
+function handleLogin() {
+  loading.value = true;
+  formRef.value
+    .validate()
+    .then(() => {
+      login(form.value)
+        .then((res) => {
+          TokenStorage.setToken(res);
+        })
+        .finally(() => {
+          loading.value = false;
+        });
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
 
-function initVerify(){
-    verify("Login").then((res)=>{
-      codeBase64.value = res.verificationCode
-      form.value.uniqueId = res.uniqueId
-      console.log(!!codeBase64.value)
-    })
+function initVerify() {
+  verify("Login").then((res) => {
+    codeBase64.value = res.verificationCode;
+    form.value.uniqueId = res.uniqueId;
+  });
 }
 
 //通知提醒
-function openNotification (title:string,message:string) {
+function openNotification(title: string, message: string) {
   notification.open({
     message: title,
-    description:message,
+    description: message,
     duration: 1,
   });
-};
+}
 
+function refreshCaptcha() {
+  initVerify();
+}
 const goReset = () => {
   router.push("/reset"); // 确保你有这个路由
 };
@@ -115,181 +155,95 @@ const goRegister = () => {
 </script>
 
 <style lang="less" scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* 基础布局和响应式样式 */
+.login-wrapper {
+  /* 使用背景图片和渐变叠加效果 */
+  background:
+    linear-gradient(135deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6)),
+    url("/src//assets//bg.webp");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
 }
 
-body {
+.login-row {
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+}
+
+.login-image-column {
+  height: 100%;
+}
+
+.image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.login-background {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.login-form-column {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-body:after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-color: #010101;
-  width: 60%;
-  height: 100vh;
-  clip-path: polygon(0 100%, 0 0, 100% 0, 70% 100%);
-  z-index: -1;
+  height: 100%;
+  padding: 16px;
 }
 
 .login-card {
-  background-color: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 10px 50px -30px black;
-  width: 1200px;
-  border-radius: 30px;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: auto auto;
-}
-.login-card a {
-  text-decoration: none;
-  color: #010101;
-}
-.login-card .column {
-  padding: 4rem;
-}
-.login-card .column:last-child {
-  background: url("/src/assets/bg.webp") center;
-  background-size: cover;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
-}
-.login-card .column:last-child:after {
-  content: "";
-  position: absolute;
-  background: linear-gradient(90deg, white, rgba(255, 255, 255, 0.1333333333));
-  inset: 0;
-}
-.login-card .column:last-child * {
-  z-index: 1;
-}
-.login-card .column:last-child a {
-  display: inline-block;
-  padding: 12px 30px;
-  font-size: 16px;
-  border: 2px solid #010101;
-  color: black;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3;
-  font-weight: 600;
-}
-.login-card .column:last-child a:hover {
-  background-color: #010101;
-  color: white;
-}
-.login-card .column:last-child {
-  text-align: center;
-}
-.login-card h1 {
-  margin-bottom: 15px;
-}
-.login-card .form-element {
   width: 100%;
-  border: none;
-  background-color: white;
-  padding:  10px 30px;
-  font-size: 18px;
-  border-radius: 5px;
-  transition: box-shadow 0.2s;
-  outline: none;
-  box-shadow: 0 0 0 2px #010101;
+  max-width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  background-color: #fff;
 }
 
-.login-card input[type="checkbox"] {
-  accent-color: #010101;
-  width: 16px;
-  height: 16px;
+.login-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 24px;
 }
-.login-card form {
-  margin-top: 3rem;
+
+.captcha-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
-.login-card form > * {
-  margin-top: 1rem;
-}
-.login-card form button {
-  background-color: #010101;
-  color: white;
-  border: none;
-  padding: 15px 80px;
-  border-radius: 5px;
+
+.captcha-image {
   cursor: pointer;
-  font-weight: 600;
-  font-size: 18px;
-  transition: all 0.2s;
-}
-.login-card form button:active {
-  scale: 0.95;
-  background-color: black;
-}
-.login-card form .form-check-item {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-left: 5px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
 }
 
-.flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.social-buttons {
-  display: flex;
-  gap: 1rem;
-}
-.social-buttons a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 180px;
-  height: 50px;
-  border-radius: 10px;
-  font-size: 22px;
-  color: white;
-  background-color: green;
-}
-.social-buttons a.wechat {
-  background-color: #06ca5c;
-}
-.social-buttons a.twitter {
-  background-color: #55acee;
-}
-.social-buttons a.github {
-  background-color: #111;
-}
-.social-buttons a:hover {
-  scale: 0.95;
-}
-
-@media (max-width: 992px) {
+/* 深色模式样式，通过 prefers-color-scheme 媒体查询自动生效 */
+@media (prefers-color-scheme: dark) {
+  .login-wrapper {
+    background: linear-gradient(to right, #1c1c1e, #2c2c2e);
+  }
   .login-card {
-    display: block;
-    width: 500px;
-    text-align: center;
+    background-color: #2c2c2e;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    color: #f0f0f0;
   }
-  .login-card .column:last-child {
-    display: none;
+  .login-title {
+    color: #ffffff;
   }
-  .flex {
-    flex-direction: column;
-    gap: 1rem;
+  /* 针对 Ant Design 组件，部分边框和输入框可能需要细调 */
+  .captcha-image {
+    border: 1px solid #444;
   }
-  .social-buttons {
-    justify-content: center;
-  }
+  /* 如果需要，也可以调整 a-input 和 a-button 的颜色 */
 }
 </style>
