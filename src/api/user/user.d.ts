@@ -65,7 +65,7 @@ export interface UserResponse {
     /**
      * 用户id
      */
-    userId: number;
+    userId: number | null;
     /**
      * 用户名
      */

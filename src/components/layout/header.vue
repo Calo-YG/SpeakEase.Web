@@ -8,7 +8,7 @@
           </div>
           <template #overlay>
             <a-menu>
-              <a-menu-item key="profile" @click="goTo('/profile')">
+              <a-menu-item key="profile" @click="setModal1Visible()">
                 👤 个人信息
               </a-menu-item>
               <a-menu-item key="password" @click="goTo('/reset')">
@@ -26,6 +26,8 @@
         </a>
       </div>
     </div>
+
+    <profile v-if="visible" />
   </template>
   
   <script setup lang="ts">
@@ -33,9 +35,10 @@
   import { useRouter } from "vue-router";
   import { TokenStorage} from "@/utils/tokenStorage"
   import type { UserState } from "@/store/user/user"
-  
+  import profile from "@/components/user/profile.vue"
   
   const router = useRouter();
+  const visible = ref(false)
   const store = ref<UserState | null>({
     userId: null,
     userName: "",
@@ -50,6 +53,10 @@
     store.value = TokenStorage.getUserInfo()
   })
 
+  function setModal1Visible(){
+    visible.value = !visible.value
+  }
+  
 
   function logout() {
     localStorage.clear();
@@ -69,7 +76,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
   }
   
   .user-section {
@@ -98,6 +105,14 @@
   
   .github-link:hover {
     text-decoration: underline;
+  }
+
+  .profile{
+    position: absolute;
+    top: 0px;   /* 距父元素顶部 20px */
+    right: 30px; /* 距父元素右侧 30px */
+    background-color: #4caf50;
+    padding: 10px;
   }
   </style>
   
