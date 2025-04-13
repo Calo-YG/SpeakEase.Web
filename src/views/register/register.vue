@@ -1,4 +1,5 @@
 <template>
+<div class="container">
   <div class="login-card">
     <div class="column">
       <h1>注册</h1>
@@ -64,6 +65,7 @@
       <a @click="goLogin">登录</a>
     </div>
   </div>
+</div>
 </template>
 
 <script lang="ts" setup>
@@ -165,6 +167,14 @@ body {
   min-height: 100vh;
   padding: 1.5rem;
   background-color: #f2f2f2;
+}
+
+.container {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center;     /* 垂直居中 */
+  /* 如果希望容器全屏居中，请设置高度 */
+  height: 100vh;
 }
 
 .login-card {

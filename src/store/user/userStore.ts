@@ -1,16 +1,8 @@
 // src/store/user.ts
 import { defineStore } from 'pinia'
 import { TokenStorage } from '@/utils/tokenStorage'
-
-export interface UserState {
-  userId: number
-  userName: string
-  email: string
-  phone: string
-  avatar: string
-  token: string
-  refreshToken: string
-}
+import type {TokenResponse} from '@/api/auth/auth'
+import type {UserState} from '@/store/user/user'
 
 export const useUserStore = defineStore('user', {
   state: (): UserState => ({
@@ -24,9 +16,23 @@ export const useUserStore = defineStore('user', {
   }),
 
   actions: {
+    setToken(data:TokenResponse){
+      TokenStorage.setToken(data)
+
+    },
     // 设置用户信息（登录后）
     setUserInfo(payload: Partial<UserState>) {
       this.$patch(payload)
+
+      TokenStorage.setUserInfo({
+        userId: payload.userId || 0,
+        userName: payload.userName || '',
+        email: payload.email || '',
+        phone: payload.phone || '',
+        avatar: payload.avatar || '',
+        token: payload.token || '',
+        refreshToken: payload.refreshToken || '',
+      })
 
       // 只保存 token 部分到 localStorage
       TokenStorage.setToken({

@@ -8,7 +8,6 @@ import type {
 } from '@/api/user/user';
 import request from '@/http/request';
 import { IResponseType } from '@/http/response';
-import { VerificationCodeResponse } from '../auth/auth';
 
 const URL = {
     Register: "/api/user/Register",

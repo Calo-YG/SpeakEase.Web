@@ -20,5 +20,13 @@ export const routes: Array<RouteRecordRaw> = [
     meta: {
       title: "注册",
     },
+  },
+  {
+    path: "/index",
+    name: "首页",
+    component: () => import("@/components/layout/index.vue"),
+    meta: {
+      title: "注册",
+    },
   }
 ];

@@ -1,4 +1,5 @@
 <template>
+<div class="container">
   <div class="login-card">
     <div class="column">
       <h1>登陆</h1>
@@ -54,6 +55,7 @@
       <a href="#" @click="goRegister()">注册</a>
     </div>
   </div>
+</div>
 </template>
 
 <script lang="ts" setup>
@@ -62,7 +64,9 @@ import { useRouter } from "vue-router";
 import type { LoginRequest } from "@/api/auth/auth";
 import { login, verify } from "@/api/auth/index";
 import { notification } from "ant-design-vue";
-import { TokenStorage } from "@/utils/tokenStorage";
+import { getUser} from "@/api/user/index"
+import { useUserStore} from "@/store/user/userStore"
+import type {UserState} from "@/store/user/user"
 
 const router = useRouter();
 const form = ref<LoginRequest>({
@@ -71,13 +75,14 @@ const form = ref<LoginRequest>({
   uniqueId: "",
   userAccount: "",
 });
+const store = useUserStore()
 
 const formRef = ref();
 const codeBase64 = ref("");
 const loading = ref(false);
 
 const rules = {
-  username: [
+  userAccount: [
     { required: true, message: "请输入用户名"},
     { min: 3, max: 16, message: "用户名长度应为 3-16 个字符"},
   ],
@@ -85,9 +90,8 @@ const rules = {
     { required: true, message: "请输入密码"},
     { min: 6, max: 20, message: "密码长度应为 6-20 个字符"},
   ],
-  captcha: [
+  code: [
     { required: true, message: "请输入验证码"},
-    { len: 4, message: "验证码应为 4 位字符"},
   ],
 };
 
@@ -101,9 +105,22 @@ function handleLogin() {
     .validate()
     .then(() => {
       login(form.value)
-        .then((res) => {
-          TokenStorage.setToken(res);
+        .then(async (res) => {
+          const loginres = res;
+          store.setToken(res)
+          var useRes = await getUser()
+          const user:UserState = {
+              avatar:useRes.avatar,
+              email:useRes.email,
+              phone:useRes.phone,
+              userName:useRes.userName,
+              userId:useRes.userId,
+              token:loginres.token,
+              refreshToken:loginres.refreshToken
+             }
+          store.setUserInfo(user)
           openNotification("success", "登录成功");
+          router.push('/index')
         })
         .finally(() => {
           loading.value = false;
@@ -166,6 +183,15 @@ body:after {
   clip-path: polygon(0 100%, 0 0, 100% 0, 70% 100%);
   z-index: -1;
 }
+
+.container {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center;     /* 垂直居中 */
+  /* 如果希望容器全屏居中，请设置高度 */
+  height: 100vh;
+}
+
 
 .login-card {
   background-color: white;

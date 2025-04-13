@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { TokenStorage } from '@/utils/tokenStorage'
 import { notification } from 'ant-design-vue';
+import { useRouter } from "vue-router";
 
+const router = useRouter()
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'https://api.example.com',
   timeout: 10000,
@@ -40,6 +42,7 @@ instance.interceptors.response.use(
       case 401:
         openNotification('warning', '未授权', '请重新登录');
         // 可选：跳转到登录页逻辑
+        router.push("/login")
         break;
       case 403:
         openNotification('warning', '无权限', '你没有访问该资源的权限');
