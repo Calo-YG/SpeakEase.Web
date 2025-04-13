@@ -51,7 +51,7 @@
     <div class="column">
       <h2>自然选择号欢迎您登舰！</h2>
       <p>如果你没有账号，你想要现在注册一个吗？</p>
-      <a href="#">注册</a>
+      <a href="#" @click="goRegister()">注册</a>
     </div>
   </div>
 </template>

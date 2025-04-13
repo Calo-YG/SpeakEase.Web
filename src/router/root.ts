@@ -13,4 +13,12 @@ export const routes: Array<RouteRecordRaw> = [
       title: "登录",
     },
   },
+  {
+    path: "/register",
+    name: "register",
+    component: () => import("@/views/register/register.vue"),
+    meta: {
+      title: "注册",
+    },
+  }
 ];

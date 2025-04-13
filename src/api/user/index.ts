@@ -8,6 +8,7 @@ import type {
 } from '@/api/user/user';
 import request from '@/http/request';
 import { IResponseType } from '@/http/response';
+import { VerificationCodeResponse } from '../auth/auth';
 
 const URL = {
     Register: "/api/user/Register",
@@ -16,7 +17,7 @@ const URL = {
     CreateUserSetting: "/api/user/CreateUserSetting",
     UpdateUserSetting: "/api/user/UpdateUserSetting",
     GetUserSetting: "/api/user/GetUserSetting",
-    UploadAvatar: "/api/user/UploadAvatar"
+    UploadAvatar: "/api/user/UploadAvatar",
 };
 
 const register = (data: CreateUserRequest) => 
