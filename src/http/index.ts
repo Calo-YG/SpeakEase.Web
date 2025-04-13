@@ -50,6 +50,9 @@ instance.interceptors.response.use(
       case 500:
         openNotification('error', '服务器错误', '请稍后再试');
         break;
+      case 499:
+        openNotification('warning','友好提示',error?.response?.data?.message)
+        break; 
       default:
         openNotification('error', '请求异常', error?.message || '未知错误');
         break;
