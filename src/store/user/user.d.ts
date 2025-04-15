@@ -5,5 +5,6 @@ export interface UserState {
   phone: string
   avatar: string
   token: string
-  refreshToken: string
+  refreshToken: string,
+  isAuthenticated:boolean
 }

@@ -37,7 +37,6 @@
     },
     getUserInfo():UserState | null{
       const tokenString = localStorage.getItem(USER_KEY);
-      console.log(tokenString)
       try {
         return tokenString ? JSON.parse(tokenString) as UserState : null;
       } catch {

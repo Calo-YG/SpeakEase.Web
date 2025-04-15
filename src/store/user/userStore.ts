@@ -13,6 +13,7 @@ export const useUserStore = defineStore('user', {
     avatar: '',
     token: '',
     refreshToken: '',
+    isAuthenticated:false
   }),
 
   actions: {
@@ -32,6 +33,7 @@ export const useUserStore = defineStore('user', {
         avatar: payload.avatar || '',
         token: payload.token || '',
         refreshToken: payload.refreshToken || '',
+        isAuthenticated:payload.isAuthenticated || false
       })
 
       // 只保存 token 部分到 localStorage

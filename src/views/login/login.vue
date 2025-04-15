@@ -116,7 +116,8 @@ function handleLogin() {
               userName:useRes.userName,
               userId:useRes.userId,
               token:loginres.token,
-              refreshToken:loginres.refreshToken
+              refreshToken:loginres.refreshToken,
+              isAuthenticated:true
              }
           store.setUserInfo(user)
           openNotification("success", "登录成功");
@@ -140,7 +141,7 @@ function initVerify() {
 
 //通知提醒
 function openNotification(title: string, message: string) {
-  notification.open({
+  notification['success']({
     message: title,
     description: message,
     duration: 1,

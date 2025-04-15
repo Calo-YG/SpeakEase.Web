@@ -40,10 +40,6 @@ export interface UpdateUserRequest {
      * 密码
      */
     password:string;
-    /**
-     * 用户id
-     */
-    userId:number;
 }
 
 /**

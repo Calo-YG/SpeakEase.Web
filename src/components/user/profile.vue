@@ -5,11 +5,11 @@
       <a-avatar :src="user.avatar" size="large" />
 
       <!-- 用户昵称 -->
-      <p><strong>用户名称</strong>{{ user.userName }}</p>
+      <p><strong>用户名称：</strong>{{ user.userName }}</p>
 
       <!-- 用户邮箱和手机号 -->
-      <p><strong>邮箱</strong>{{ user.email }}</p>
-      <p><strong>手机号</strong>{{ user.phone }}</p>
+      <p><strong>邮箱：</strong>{{ user.email }}</p>
+      <p><strong>手机号：</strong>{{ user.phone }}</p>
     </div>
   </div>
 </template>
