@@ -31,11 +31,12 @@ const post = <T = any>(url: string, data?: any): Promise<T> => {
  * @param uploadUrl 上传接口地址
  * @param extraData 可选的额外字段
  */
-const uploadFile = async (
+const uploadFile =  (
     file: File,
     uploadUrl: string,
     extraData?: Record<string, string>
   ): Promise<IResponseType<void>> => {
+    
     const formData = new FormData()
     formData.append('file', file)
   
@@ -45,7 +46,7 @@ const uploadFile = async (
       })
     }
   
-    return axiosInstance.post(uploadUrl, formData, {
+    return axiosInstance.post(import.meta.env.VITE_API_BASE + uploadUrl, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

@@ -24,6 +24,7 @@ declare module 'vue' {
     AMenuItem: typeof import('ant-design-vue/es')['MenuItem']
     AModal: typeof import('ant-design-vue/es')['Modal']
     ARow: typeof import('ant-design-vue/es')['Row']
+    AUpload: typeof import('ant-design-vue/es')['Upload']
     Container: typeof import('./src/components/container/index.vue')['default']
     Header: typeof import('./src/components/layout/header.vue')['default']
     Layout: typeof import('./src/components/layout/index.vue')['default']

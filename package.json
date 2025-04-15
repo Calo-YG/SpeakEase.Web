@@ -17,6 +17,7 @@
     "commit": "git-cz"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
     "ant-design-vue": "4.x",
     "axios": "^1.8.4",
     "element-plus": "^2.9.7",
