@@ -4,6 +4,10 @@ import router from '@/router'; // 确保使用项目路由实例，而非 useRou
 import { TokenStorage } from '@/utils/tokenStorage';
 import { notification } from 'ant-design-vue';
 
+interface RefresheTokenRes{
+  refreshToken:string
+}
+
 // 创建 Axios 实例
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'https://api.example.com',
@@ -37,10 +41,11 @@ instance.interceptors.request.use(
 
 // 刷新接口封装
 function refreshToken() {
-  return axios.post('/auth/refresh', {
-    refreshToken: TokenStorage.getToken(),      // 使用 Refresh Token 获取新 Access Token&#8203;:contentReference[oaicite:7]{index=7}
+  return axios.post('api/auth/refresh', {
+    refreshToken: TokenStorage.getToken()?.refreshToken,  
+    id:TokenStorage.getUserInfo()?.userId    // 使用 Refresh Token 获取新 Access Token&#8203;:contentReference[oaicite:7]{index=7}
   })
-  .then(res => res.data.accessToken);
+  .then((res) => res.data.refreshToken);
 }
 
 // 响应拦截：业务错误与 Token 刷新

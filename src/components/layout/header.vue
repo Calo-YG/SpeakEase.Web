@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted ,computed} from "vue";
 import { useRouter } from "vue-router";
 import { TokenStorage } from "@/utils/tokenStorage";
 import type { UserState } from "@/store/user/user";
@@ -58,6 +58,10 @@ function setModal1Visible() {
   visible.value = !visible.value;
 }
 
+const computeAvatar = computed(()=>{
+ 
+})
+
 function logout() {
   localStorage.clear();
   router.push("/login");
@@ -66,6 +70,7 @@ function logout() {
 function openModal() {
   open.value = true;
 }
+
 </script>
 
 <style scoped>
