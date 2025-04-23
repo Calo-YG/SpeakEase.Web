@@ -3,8 +3,6 @@ export interface UserState {
   userName: string
   email: string
   phone: string
-  avatar: string
-  token: string
-  refreshToken: string,
+  avatar: string,
   isAuthenticated:boolean
 }

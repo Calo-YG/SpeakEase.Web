@@ -106,8 +106,9 @@ function handleLogin() {
     .then(() => {
       login(form.value)
         .then(async (res) => {
-          const loginres = res;
           store.setToken(res)
+          router.push('/index')
+          openNotification("success", "登录成功");
           var useRes = await getUser()
           const user:UserState = {
               avatar:useRes.avatar,
@@ -115,13 +116,9 @@ function handleLogin() {
               phone:useRes.phone,
               userName:useRes.userName,
               userId:useRes.userId,
-              token:loginres.token,
-              refreshToken:loginres.refreshToken,
               isAuthenticated:true
              }
-          store.setUserInfo(user)
-          openNotification("success", "登录成功");
-          router.push('/index')
+
         })
         .finally(() => {
           loading.value = false;
