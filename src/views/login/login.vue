@@ -137,8 +137,8 @@ const validateForm = () => {
   if (!form.value.code) {
     errors.value.code = "请输入验证码";
     isValid = false;
-  } else if (form.value.code.length !== 6) {
-    errors.value.code = "验证码长度应为 6 位";
+  } else if (form.value.code.length !== 4) {
+    errors.value.code = "验证码长度应为 4 位";
     isValid = false;
   }
 
@@ -167,7 +167,7 @@ async function handleLogin() {
     
     store.setUserInfo(user);
     showNotification("success", "登录成功");
-    router.push('/index');
+    await router.push('/index');
   } catch (error: any) {
     console.error('登录失败:', error);
     showNotification("error", error.message || "登录失败，请重试");
