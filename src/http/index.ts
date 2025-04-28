@@ -4,14 +4,9 @@ import router from '@/router'; // 确保使用项目路由实例，而非 useRou
 import { TokenStorage } from '@/utils/tokenStorage';
 import { notification } from 'ant-design-vue';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import type { IResponseType } from '@/http/response';
+import type { ApiResponse } from '@/http/response';
 
 // 定义接口和类型
-interface ApiResponse<T = any> {
-  isSuccess: boolean;
-  message?: string;
-  data: T;
-}
 
 interface RefreshTokenResponse {
   refreshToken: string;
@@ -93,8 +88,9 @@ async function refreshToken(): Promise<string> {
 
 // 响应拦截：业务错误与 Token 刷新
 instance.interceptors.response.use(
-  (response: AxiosResponse<IResponseType>) => {
+  (response: AxiosResponse<ApiResponse>) => {
     const res = response.data
+    console.log(response)
     if (!res.success) {
       notification.error({
         message: '请求失败',
@@ -128,7 +124,7 @@ instance.interceptors.response.use(
 
       isRefreshing = true
       try {
-        const response = await axios.post<IResponseType<RefreshTokenResponse>>(
+        const response = await axios.post<ApiResponse<RefreshTokenResponse>>(
           'api/auth/refresh',
           {
             refreshToken: TokenStorage.getToken()?.refreshToken,

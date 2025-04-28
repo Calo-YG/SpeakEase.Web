@@ -2,62 +2,71 @@
 <div class="container">
   <div class="login-card">
     <div class="column">
-      <h1>登陆</h1>
+      <h1>登录</h1>
       <p>SpeakEase 让说和表达更简单</p>
-      <a-form
-        :model="form"
-        :rules="rules"
-        ref="formRef"
-        layout="vertical"
-        @finish="handleLogin"
-      >
-        <a-form-item label="用户名" name="userAccount">
-          <a-input
-            v-model:value="form.userAccount"
+      <form @submit.prevent="handleLogin" class="login-form">
+        <div class="form-group">
+          <label for="userAccount">用户名</label>
+          <input
+            id="userAccount"
+            v-model="form.userAccount"
+            type="text"
             placeholder="请输入用户名"
-            :maxLength="16"
-            allow-clear
+            maxlength="16"
+            :class="{ 'error': errors.userAccount }"
           />
-        </a-form-item>
-        <a-form-item label="密码" name="password">
-          <a-input-password
-            v-model:value="form.password"
-            placeholder="请输入密码"
-            :maxLength="20"
-            allow-clear
-          />
-        </a-form-item>
+          <span class="error-message" v-if="errors.userAccount">{{ errors.userAccount }}</span>
+        </div>
 
-        <a-form-item label="验证码" name="code">
-          <div class="captcha-wrapper">
-            <a-input
-              v-model:value="form.code"
-              placeholder="请输入验证码"
-              :maxLength="6"
-              allow-clear
+        <div class="form-group">
+          <label for="password">密码</label>
+          <div class="password-input">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="请输入密码"
+              maxlength="20"
+              :class="{ 'error': errors.password }"
             />
-            <a-image
+            <span class="toggle-password" @click="togglePassword">
+              {{ showPassword ? '隐藏' : '显示' }}
+            </span>
+          </div>
+          <span class="error-message" v-if="errors.password">{{ errors.password }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="code">验证码</label>
+          <div class="captcha-wrapper">
+            <input
+              id="code"
+              v-model="form.code"
+              type="text"
+              placeholder="请输入验证码"
+              maxlength="6"
+              :class="{ 'error': errors.code }"
+            />
+            <img
               :src="codeBase64"
               alt="验证码"
-              width="100"
-              height="32"
               class="captcha-image"
               @click="refreshCaptcha"
-              preview="false"
             />
           </div>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" html-type="submit" block :loading="loading">
-            登录
-          </a-button>
-        </a-form-item>
-      </a-form>
+          <span class="error-message" v-if="errors.code">{{ errors.code }}</span>
+        </div>
+
+        <button type="submit" class="login-button" :disabled="loading">
+          <span v-if="loading">登录中...</span>
+          <span v-else>登录</span>
+        </button>
+      </form>
     </div>
     <div class="column">
       <h2>自然选择号欢迎您登舰！</h2>
       <p>如果你没有账号，你想要现在注册一个吗？</p>
-      <a-button type="link" @click="goRegister">注册</a-button>
+      <button class="register-button" @click="goRegister">注册</button>
     </div>
   </div>
 </div>
@@ -68,13 +77,12 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { LoginRequest } from "@/api/auth/auth";
 import { login, verify } from "@/api/auth";
-import { notification } from "ant-design-vue";
-import { getUser} from "@/api/user"
-import { useUserStore} from "@/store/user/userStore"
-import type {UserState} from "@/store/user/user"
+import { getUser } from "@/api/user";
+import { useUserStore } from "@/store/user/userStore";
+import type { UserState } from "@/store/user/user";
 
 const router = useRouter();
-const store = useUserStore()
+const store = useUserStore();
 
 const form = ref<LoginRequest>({
   code: "",
@@ -82,50 +90,79 @@ const form = ref<LoginRequest>({
   uniqueId: "",
   userAccount: "",
 });
-const formRef = ref();
+
+const errors = ref({
+  userAccount: "",
+  password: "",
+  code: "",
+});
+
 const codeBase64 = ref("");
 const loading = ref(false);
+const showPassword = ref(false);
 
-const rules = {
-  userAccount: [
-    { required: true, message: "请输入用户名"},
-    { min: 3, max: 16, message: "用户名长度应为 3-16 个字符"},
-    { pattern: /^[a-zA-Z0-9_]+$/, message: "用户名只能包含字母、数字和下划线"},
-  ],
-  password: [
-    { required: true, message: "请输入密码"},
-    { min: 6, max: 20, message: "密码长度应为 6-20 个字符"},
-    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/, message: "密码必须包含大小写字母和数字"},
-  ],
-  code: [
-    { required: true, message: "请输入验证码"},
-    { len: 6, message: "验证码长度应为 6 位"},
-  ],
+const validateForm = () => {
+  let isValid = true;
+  errors.value = {
+    userAccount: "",
+    password: "",
+    code: "",
+  };
+
+  // 验证用户名
+  if (!form.value.userAccount) {
+    errors.value.userAccount = "请输入用户名";
+    isValid = false;
+  } else if (form.value.userAccount.length < 3 || form.value.userAccount.length > 16) {
+    errors.value.userAccount = "用户名长度应为 3-16 个字符";
+    isValid = false;
+  } else if (!/^[a-zA-Z0-9_]+$/.test(form.value.userAccount)) {
+    errors.value.userAccount = "用户名只能包含字母、数字和下划线";
+    isValid = false;
+  }
+
+  // 验证密码
+  if (!form.value.password) {
+    errors.value.password = "请输入密码";
+    isValid = false;
+  } else if (form.value.password.length < 6 || form.value.password.length > 20) {
+    errors.value.password = "密码长度应为 6-20 个字符";
+    isValid = false;
+  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(form.value.password)) {
+    errors.value.password = "密码必须包含大小写字母和数字";
+    isValid = false;
+  }
+
+  // 验证验证码
+  if (!form.value.code) {
+    errors.value.code = "请输入验证码";
+    isValid = false;
+  } else if (form.value.code.length !== 6) {
+    errors.value.code = "验证码长度应为 6 位";
+    isValid = false;
+  }
+
+  return isValid;
 };
-
-onMounted(() => {
-  initVerify();
-});
 
 async function handleLogin() {
   if (loading.value) return;
   
+  if (!validateForm()) return;
+  
   try {
     loading.value = true;
-    await formRef.value.validate();
-    
     const res = await login(form.value);
     store.setToken(res);
     
-    // 获取用户信息
     const userRes = await getUser();
-    const user:UserState = {
-      avatar:userRes.avatar,
-      email:userRes.email,
-      phone:userRes.phone,
-      userName:userRes.userName,
-      userId:userRes.userId,
-      isAuthenticated:true
+    const user: UserState = {
+      avatar: userRes.avatar,
+      email: userRes.email,
+      phone: userRes.phone,
+      userName: userRes.userName,
+      userId: userRes.userId,
+      isAuthenticated: true
     };
     
     store.setUserInfo(user);
@@ -151,21 +188,24 @@ async function initVerify() {
   }
 }
 
-//通知提醒
 function showNotification(type: 'success' | 'error', message: string) {
-  notification[type]({
-    message: type === 'success' ? '成功' : '错误',
-    description: message,
-    duration: 2,
-  });
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 2000);
 }
 
 function refreshCaptcha() {
   initVerify();
 }
-const goReset = () => {
-  router.push("/reset"); // 确保你有这个路由
-};
+
+function togglePassword() {
+  showPassword.value = !showPassword.value;
+}
 
 const goRegister = () => {
   router.push("/register");
@@ -173,213 +213,242 @@ const goRegister = () => {
 </script>
 
 <style lang="less" scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-body:after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-color: #010101;
-  width: 60%;
-  height: 100vh;
-  clip-path: polygon(0 100%, 0 0, 100% 0, 70% 100%);
-  z-index: -1;
-}
-
 .container {
   display: flex;
-  justify-content: center; /* 水平居中 */
-  align-items: center;     /* 垂直居中 */
-  /* 如果希望容器全屏居中，请设置高度 */
-  height: 100vh;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
-
 
 .login-card {
   background-color: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 10px 50px -30px black;
-  width: 1200px;
-  border-radius: 30px;
-  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 1000px;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
 }
-.login-card a {
-  text-decoration: none;
-  color: #010101;
+
+.column {
+  padding: 3rem;
+  
+  &:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  &:last-child {
+    background: url("/src/assets/bg.webp") center;
+    background-size: cover;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    * {
+      position: relative;
+      z-index: 1;
+    }
+  }
 }
-.login-card .column {
-  padding: 4rem;
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #333;
 }
-.login-card .column:last-child {
-  background: url("/src//assets//bg.webp") center;
-  background-size: cover;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
 }
-.login-card .column:last-child:after {
-  content: "";
-  position: absolute;
-  background: linear-gradient(90deg, white, rgba(255, 255, 255, 0.1333333333));
-  inset: 0;
+
+p {
+  color: #666;
+  margin-bottom: 2rem;
 }
-.login-card .column:last-child * {
-  z-index: 1;
-}
-.login-card .column:last-child a {
-  display: inline-block;
-  padding: 12px 30px;
-  font-size: 16px;
-  border: 2px solid #010101;
-  color: black;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3;
-  font-weight: 600;
-}
-.login-card .column:last-child a:hover {
-  background-color: #010101;
-  color: white;
-}
-.login-card .column:last-child {
-  text-align: center;
-}
-.login-card h1 {
-  margin-bottom: 15px;
-}
-.login-card .form-element {
+
+.login-form {
   width: 100%;
-  border: none;
-  background-color: white;
-  padding: 20px 30px;
-  font-size: 18px;
-  border-radius: 50px;
-  transition: box-shadow 0.2s;
-  outline: none;
-  box-shadow: 0 0 0 2px #010101;
+  max-width: 400px;
 }
 
-.login-card input {
-  padding: 10px 16px !important;
+.form-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+}
+
+input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 16px;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    border-color: #1890ff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+  
+  &.error {
+    border-color: #ff4d4f;
+  }
 }
 
-// 验证码容器样式（验证码和输入框在一行）
+.error-message {
+  color: #ff4d4f;
+  font-size: 14px;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.password-input {
+  position: relative;
+  
+  .toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1890ff;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+  }
+}
+
 .captcha-wrapper {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 10px;
+  
+  input {
+    flex: 1;
+  }
+  
+  .captcha-image {
+    height: 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.02);
+    }
+  }
 }
 
-// 验证码图片样式（可根据实际视觉调整）
-.captcha-image {
-  cursor: pointer;
-  border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-// 登录按钮居中
-.login-card .ant-form-item:last-of-type {
-  display: flex;
-  justify-content: center;
-}
-
-.login-card input:focus {
-  box-shadow: 0 0 0 2px #01010133;
-  transition: box-shadow 0.2s ease;
-}
-
-.login-card form {
-  margin-top: 3rem;
-}
-.login-card form > * {
-  margin-top: 1rem;
-}
-
-.flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.social-buttons {
-  display: flex;
-  gap: 1rem;
-}
-.social-buttons a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50px;
-  font-size: 22px;
+.login-button {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(45deg, #1890ff, #40a9ff);
   color: white;
-  background-color: green;
-}
-.social-buttons a.wechat {
-  background-color: #06ca5c;
-}
-.social-buttons a.twitter {
-  background-color: #55acee;
-}
-.social-buttons a.github {
-  background-color: #111;
-}
-.social-buttons a:hover {
-  scale: 0.95;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
 }
 
-::v-deep(.ant-input-password) input {
-  padding: 10px 16px !important;
+.register-button {
+  padding: 12px 30px;
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  border-radius: 8px;
   font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  
+  &:hover {
+    background: white;
+    color: #1890ff;
+    transform: translateY(-2px);
+  }
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+  
+  &.success {
+    background: #52c41a;
+  }
+  
+  &.error {
+    background: #ff4d4f;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 992px) {
   .login-card {
-    display: block;
-    width: 500px;
-    text-align: center;
+    grid-template-columns: 1fr;
+    width: 90%;
+    max-width: 500px;
   }
-  .login-card .column:last-child {
+  
+  .column:last-child {
     display: none;
   }
-  .flex {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .social-buttons {
-    justify-content: center;
-  }
 }
-
-// 登录按钮美化
-::v-deep(.ant-btn-primary) {
-  height: 48px;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  width: 220px;
-}
-
-
-
 </style>

@@ -1,6 +1,6 @@
 import axiosInstance from '@/http/index'
 import type { AxiosRequestConfig } from 'axios'
-import type { IResponseType } from '@/http/response'
+import type { ApiResponse } from '@/http/response'
 
 // 通用 request 方法
 const request = <T = any>(config: AxiosRequestConfig): Promise<T> => {
@@ -36,7 +36,7 @@ const uploadFile = async (
   file: File,
   uploadUrl: string,
   extraData?: Record<string, string>
-): Promise<IResponseType<string>> => {
+): Promise<ApiResponse<string>> => {
   try {
     const formData = new FormData()
     formData.append('file', file)
@@ -47,7 +47,7 @@ const uploadFile = async (
       })
     }
 
-    const response = await axiosInstance.post<IResponseType<string>>(
+    const response = await axiosInstance.post<ApiResponse<string>>(
       import.meta.env.VITE_API_BASE + uploadUrl,
       formData,
       {

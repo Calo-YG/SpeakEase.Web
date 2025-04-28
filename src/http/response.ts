@@ -2,7 +2,7 @@
  * 通用响应类型
  * @template P 响应数据的具体类型
  */
-export interface IResponseType<P = any> {
+export interface ApiResponse<P = any> {
     /** 状态码 */
     code: number;
     /** 是否成功 */

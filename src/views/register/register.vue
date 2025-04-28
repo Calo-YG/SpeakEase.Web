@@ -1,101 +1,115 @@
 <template>
-<div class="container">
-  <div class="login-card">
-    <div class="column">
-      <h1>注册</h1>
-      <p>加入 SpeakEase，让表达更简单</p>
-      <a-form
-        :model="form"
-        :rules="rules"
-        ref="formRef"
-        layout="vertical"
-        @finish="handleRegister"
-      >
-        <a-form-item label="昵称" name="userName">
-          <a-input
-            v-model:value="form.userName"
-            placeholder="请输入昵称"
-            :maxLength="20"
-            allow-clear
-          />
-        </a-form-item>
-
-        <a-form-item label="用户名" name="userAccount">
-          <a-input
-            v-model:value="form.userAccount"
-            placeholder="请输入用户名"
-            :maxLength="16"
-            allow-clear
-          />
-        </a-form-item>
-
-        <a-form-item label="密码" name="password">
-          <a-input-password
-            v-model:value="form.password"
-            placeholder="请输入密码"
-            :maxLength="20"
-            allow-clear
-          />
-        </a-form-item>
-
-        <a-form-item label="邮箱" name="email">
-          <a-input
-            v-model:value="form.email"
-            placeholder="请输入邮箱"
-            :maxLength="50"
-            allow-clear
-          />
-        </a-form-item>
-
-        <a-form-item label="验证码" name="verificationCode">
-          <div class="captcha-wrapper">
-            <a-input
-              v-model:value="form.verificationCode"
-              placeholder="请输入验证码"
-              :maxLength="4"
-              allow-clear
+  <div class="container">
+    <div class="register-card">
+      <div class="column">
+        <h1>注册</h1>
+        <p>加入 SpeakEase，让表达更简单</p>
+        <form @submit.prevent="handleRegister" class="register-form">
+          <div class="form-group">
+            <label for="userName">昵称</label>
+            <input
+              id="userName"
+              v-model="form.userName"
+              type="text"
+              placeholder="请输入昵称"
+              maxlength="20"
+              :class="{ 'error': errors.userName }"
             />
-            <a-image
-              :src="codeBase64"
-              alt="验证码"
-              width="100"
-              height="32"
-              class="captcha-image"
-              @click="refreshCaptcha"
-              preview="false"
-            />
+            <span class="error-message" v-if="errors.userName">{{ errors.userName }}</span>
           </div>
-        </a-form-item>
 
-        <a-form-item>
-          <a-button type="primary" html-type="submit" block :loading="loading">
-            注册
-          </a-button>
-        </a-form-item>
-      </a-form>
-    </div>
+          <div class="form-group">
+            <label for="userAccount">用户名</label>
+            <input
+              id="userAccount"
+              v-model="form.userAccount"
+              type="text"
+              placeholder="请输入用户名"
+              maxlength="16"
+              :class="{ 'error': errors.userAccount }"
+            />
+            <span class="error-message" v-if="errors.userAccount">{{ errors.userAccount }}</span>
+          </div>
 
-    <div class="column">
-      <h2>已有账号？</h2>
-      <p>返回登录页面开始你的旅程</p>
-      <a-button type="link" @click="goLogin">登录</a-button>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <div class="password-input">
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="请输入密码"
+                maxlength="20"
+                :class="{ 'error': errors.password }"
+              />
+              <span class="toggle-password" @click="togglePassword">
+                {{ showPassword ? '隐藏' : '显示' }}
+              </span>
+            </div>
+            <span class="error-message" v-if="errors.password">{{ errors.password }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="email">邮箱</label>
+            <input
+              id="email"
+              v-model="form.email"
+              type="email"
+              placeholder="请输入邮箱"
+              maxlength="50"
+              :class="{ 'error': errors.email }"
+            />
+            <span class="error-message" v-if="errors.email">{{ errors.email }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="verificationCode">验证码</label>
+            <div class="captcha-wrapper">
+              <input
+                id="verificationCode"
+                v-model="form.verificationCode"
+                type="text"
+                placeholder="请输入验证码"
+                maxlength="4"
+                :class="{ 'error': errors.verificationCode }"
+              />
+              <img
+                :src="codeBase64"
+                alt="验证码"
+                class="captcha-image"
+                @click="refreshCaptcha"
+              />
+            </div>
+            <span class="error-message" v-if="errors.verificationCode">{{ errors.verificationCode }}</span>
+          </div>
+
+          <button type="submit" class="register-button" :disabled="loading">
+            <span v-if="loading">注册中...</span>
+            <span v-else>注册</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="column">
+        <h2>已有账号？</h2>
+        <p>返回登录页面开始你的旅程</p>
+        <button class="login-button" @click="goLogin">登录</button>
+      </div>
     </div>
   </div>
-</div>
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { notification } from "ant-design-vue";
 import { verify } from "@/api/auth/index";
 import { register } from "@/api/user/index";
 import type { CreateUserRequest } from "@/api/user/user";
 
 const router = useRouter();
-const formRef = ref();
 const codeBase64 = ref("");
 const loading = ref(false);
+const showPassword = ref(false);
 
 const form = ref<CreateUserRequest>({
   userName: "",
@@ -106,43 +120,88 @@ const form = ref<CreateUserRequest>({
   unquneId: "",
 });
 
-const rules = {
-  userName: [
-    { required: true, message: "请输入昵称", trigger: "blur" },
-    { min: 2, max: 20, message: "昵称长度应为 2-20 个字符", trigger: "blur" },
-    { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/, message: "昵称只能包含中文、字母、数字和下划线", trigger: "blur" },
-  ],
-  userAccount: [
-    { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 3, max: 16, message: "用户名长度应为 3-16 个字符", trigger: "blur" },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: "用户名只能包含字母、数字和下划线", trigger: "blur" },
-  ],
-  password: [
-    { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 6, max: 20, message: "密码长度应为 6-20 个字符", trigger: "blur" },
-    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/, message: "密码必须包含大小写字母和数字", trigger: "blur" },
-  ],
-  email: [
-    { required: true, message: "请输入邮箱", trigger: "blur" },
-    { type: "email", message: "邮箱格式不正确", trigger: "blur" },
-  ],
-  verificationCode: [
-    { required: true, message: "请输入验证码", trigger: "blur" },
-    { len: 4, message: "验证码应为 4 位字符", trigger: "blur" },
-  ],
-};
-
-onMounted(() => {
-  initVerify();
+const errors = ref({
+  userName: "",
+  userAccount: "",
+  password: "",
+  email: "",
+  verificationCode: "",
 });
+
+const validateForm = () => {
+  let isValid = true;
+  errors.value = {
+    userName: "",
+    userAccount: "",
+    password: "",
+    email: "",
+    verificationCode: "",
+  };
+
+  // 验证昵称
+  if (!form.value.userName) {
+    errors.value.userName = "请输入昵称";
+    isValid = false;
+  } else if (form.value.userName.length < 2 || form.value.userName.length > 20) {
+    errors.value.userName = "昵称长度应为 2-20 个字符";
+    isValid = false;
+  } else if (!/^[\u4e00-\u9fa5a-zA-Z0-9_]+$/.test(form.value.userName)) {
+    errors.value.userName = "昵称只能包含中文、字母、数字和下划线";
+    isValid = false;
+  }
+
+  // 验证用户名
+  if (!form.value.userAccount) {
+    errors.value.userAccount = "请输入用户名";
+    isValid = false;
+  } else if (form.value.userAccount.length < 3 || form.value.userAccount.length > 16) {
+    errors.value.userAccount = "用户名长度应为 3-16 个字符";
+    isValid = false;
+  } else if (!/^[a-zA-Z0-9_]+$/.test(form.value.userAccount)) {
+    errors.value.userAccount = "用户名只能包含字母、数字和下划线";
+    isValid = false;
+  }
+
+  // 验证密码
+  if (!form.value.password) {
+    errors.value.password = "请输入密码";
+    isValid = false;
+  } else if (form.value.password.length < 6 || form.value.password.length > 20) {
+    errors.value.password = "密码长度应为 6-20 个字符";
+    isValid = false;
+  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/.test(form.value.password)) {
+    errors.value.password = "密码必须包含大小写字母和数字";
+    isValid = false;
+  }
+
+  // 验证邮箱
+  if (!form.value.email) {
+    errors.value.email = "请输入邮箱";
+    isValid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
+    errors.value.email = "邮箱格式不正确";
+    isValid = false;
+  }
+
+  // 验证验证码
+  if (!form.value.verificationCode) {
+    errors.value.verificationCode = "请输入验证码";
+    isValid = false;
+  } else if (form.value.verificationCode.length !== 4) {
+    errors.value.verificationCode = "验证码应为 4 位字符";
+    isValid = false;
+  }
+
+  return isValid;
+};
 
 async function handleRegister() {
   if (loading.value) return;
   
+  if (!validateForm()) return;
+  
   try {
     loading.value = true;
-    await formRef.value.validate();
-    
     await register(form.value);
     showNotification("success", "注册成功，请返回登录页面进行登录");
     router.push("/login");
@@ -171,154 +230,266 @@ function refreshCaptcha() {
 }
 
 function showNotification(type: 'success' | 'error', message: string) {
-  notification[type]({
-    message: type === 'success' ? '成功' : '错误',
-    description: message,
-    duration: 2,
-  });
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 2000);
+}
+
+function togglePassword() {
+  showPassword.value = !showPassword.value;
 }
 
 function goLogin() {
   router.push("/login");
 }
+
+onMounted(() => {
+  initVerify();
+});
 </script>
 
 <style lang="less" scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1.5rem;
-  background-color: #f2f2f2;
-}
-
 .container {
   display: flex;
-  justify-content: center; /* 水平居中 */
-  align-items: center;     /* 垂直居中 */
-  /* 如果希望容器全屏居中，请设置高度 */
-  height: 100vh;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.login-card {
-  background-color: #fff;
-  border-radius: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  width: 1100px;
+.register-card {
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 1000px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
-.login-card .column {
-  padding: 3rem 4rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.column {
+  padding: 3rem;
+  
+  &:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  &:last-child {
+    background: url("/src/assets/bg.webp") center;
+    background-size: cover;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    * {
+      position: relative;
+      z-index: 1;
+    }
+  }
 }
 
-.login-card .column:first-child {
-  background-color: #fff;
-}
-
-.login-card .column:last-child {
-  background: url("/src/assets/bg.webp") center center/cover no-repeat;
-  position: relative;
-  color: #000;
-  text-align: center;
-}
-
-.login-card .column:last-child:after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 0;
-}
-
-.login-card .column:last-child > * {
-  position: relative;
-  z-index: 1;
-}
-
-.login-card h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.login-card h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
+h1 {
+  font-size: 2.5rem;
   margin-bottom: 1rem;
+  color: #333;
 }
 
-.login-card p {
-  font-size: 1rem;
-  margin-bottom: 2rem;
+h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+p {
   color: #666;
+  margin-bottom: 2rem;
 }
 
-.login-card a {
-  display: inline-block;
-  padding: 10px 26px;
-  border: 2px solid #111;
-  border-radius: 30px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  color: #111;
-  text-decoration: none;
-  cursor: pointer;
+.register-form {
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
 }
 
-.login-card a:hover {
-  background-color: #111;
-  color: white;
+.form-group {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  text-align: left;
 }
 
-a-button[block] {
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+}
+
+input {
+  width: 100%;
   height: 48px;
+  padding: 0 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 16px;
-  border-radius: 30px;
-  font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  
+  &:focus {
+    border-color: #1890ff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+  
+  &.error {
+    border-color: #ff4d4f;
+  }
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 14px;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.password-input {
+  position: relative;
+  
+  .toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1890ff;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+  }
 }
 
 .captcha-wrapper {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
+  
+  input {
+    flex: 1;
+  }
+  
+  .captcha-image {
+    height: 48px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.02);
+    }
+  }
 }
 
-.ant-input,
-.ant-input-password,
-.ant-input-affix-wrapper {
-  height: 44px;
-  border-radius: 12px !important;
-  font-size: 15px;
+.register-button {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(45deg, #1890ff, #40a9ff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
 }
 
-.ant-form-item {
-  margin-bottom: 20px;
+.login-button {
+  padding: 12px 30px;
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  
+  &:hover {
+    background: white;
+    color: #1890ff;
+    transform: translateY(-2px);
+  }
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+  
+  &.success {
+    background: #52c41a;
+  }
+  
+  &.error {
+    background: #ff4d4f;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 992px) {
-  .login-card {
-    display: block;
+  .register-card {
+    grid-template-columns: 1fr;
     width: 90%;
-    margin: auto;
+    max-width: 500px;
   }
-  .login-card .column:last-child {
+  
+  .column:last-child {
     display: none;
   }
 }
