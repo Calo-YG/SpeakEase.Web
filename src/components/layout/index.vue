@@ -19,6 +19,35 @@
 <script setup lang="ts">
 import Header from "@/components/layout/header.vue";
 import Sidebar from "@/components/layout/sidebar.vue";
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
+import { onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+// 配置 NProgress
+NProgress.configure({ 
+  easing: 'ease',
+  speed: 500,
+  showSpinner: false,
+  trickleSpeed: 200,
+  minimum: 0.3
+});
+
+const router = useRouter();
+
+// 注册路由钩子
+const removeRouterGuard = router.beforeEach((to, from, next) => {
+  NProgress.start();
+  next();
+});
+
+router.afterEach(() => {
+  NProgress.done();
+});
+
+onUnmounted(() => {
+  removeRouterGuard(); // 清理路由守卫
+});
 </script>
 
 <style scoped>
@@ -30,8 +59,8 @@ import Sidebar from "@/components/layout/sidebar.vue";
 
 .layout-container {
   display: flex;
-  height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f6f8fc 0%, #e9f0f8 50%, #dce7f3 100%);
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -41,7 +70,7 @@ import Sidebar from "@/components/layout/sidebar.vue";
   content: "";
   position: absolute;
   inset: 0;
-  background-color: #010101;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(22, 119, 255, 0.05) 100%);
   width: 60%;
   height: 100%;
   clip-path: polygon(0 100%, 0 0, 100% 0, 70% 100%);
@@ -55,6 +84,8 @@ import Sidebar from "@/components/layout/sidebar.vue";
   z-index: 1;
   background-color: transparent;
   overflow: hidden;
+  margin-left: 240px;
+  transition: margin-left 0.3s;
 }
 
 .main-container > .main-header {
@@ -70,23 +101,33 @@ import Sidebar from "@/components/layout/sidebar.vue";
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 12px;
   background-color: transparent;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
 }
 
 .content-wrapper {
   width: 100%;
-  max-width: 1200px;
-  min-height: calc(100vh - 112px);
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  min-height: calc(100vh - 88px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 自定义 NProgress 样式 */
+:global(#nprogress .bar) {
+  background: #1677ff !important;
+  height: 3px;
+}
+
+:global(#nprogress .peg) {
+  box-shadow: 0 0 10px #1677ff, 0 0 5px #1677ff;
 }
 
 /* 路由切换动画 */
@@ -106,7 +147,7 @@ import Sidebar from "@/components/layout/sidebar.vue";
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(22, 119, 255, 0.2);
   border-radius: 3px;
 }
 
@@ -115,14 +156,45 @@ import Sidebar from "@/components/layout/sidebar.vue";
 }
 
 /* 响应式布局 */
-@media (max-width: 768px) {
+@media (max-width: 1600px) {
   .content-wrapper {
-    padding: 16px;
-    border-radius: 12px;
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .content-wrapper {
+    max-width: 960px;
+  }
+}
+
+@media (max-width: 992px) {
+  .main-container {
+    margin-left: 80px;
   }
   
   .main-content {
+    padding: 8px;
+  }
+  
+  .content-wrapper {
     padding: 16px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    margin-left: 0;
+  }
+  
+  .main-content {
+    padding: 4px;
+  }
+  
+  .content-wrapper {
+    padding: 12px;
+    border-radius: 6px;
   }
 }
 </style>
