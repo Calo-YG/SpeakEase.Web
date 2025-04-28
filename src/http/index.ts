@@ -161,7 +161,7 @@ const handleErrorStatus = (status: number | undefined, error: any): void => {
     404: { message: '资源未找到', description: '请求的接口不存在' },
     500: { message: '服务器错误', description: '请稍后再试' },
     999: { message: 'refresh token 过期', description: '请重新登录' },
-    499: {message:'友好提示',describe:''}
+    499: {message:'友好提示',describe:error?.message}
   };
 
   const errorConfig = errorMessages[status as keyof typeof errorMessages] || {
