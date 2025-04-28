@@ -30,28 +30,39 @@ const post = <T = any>(url: string, data?: any): Promise<T> => {
  * @param file 要上传的文件
  * @param uploadUrl 上传接口地址
  * @param extraData 可选的额外字段
+ * @returns Promise<IResponseType<string>> 返回上传后的文件URL
  */
-const uploadFile =  (
-    file: File,
-    uploadUrl: string,
-    extraData?: Record<string, string>
-  ): Promise<IResponseType<void>> => {
-    
+const uploadFile = async (
+  file: File,
+  uploadUrl: string,
+  extraData?: Record<string, string>
+): Promise<IResponseType<string>> => {
+  try {
     const formData = new FormData()
     formData.append('file', file)
-  
+
     if (extraData) {
       Object.entries(extraData).forEach(([key, value]) => {
         formData.append(key, value)
       })
     }
-  
-    return axiosInstance.post(import.meta.env.VITE_API_BASE + uploadUrl, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+
+    const response = await axiosInstance.post<IResponseType<string>>(
+      import.meta.env.VITE_API_BASE + uploadUrl,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    console.error('文件上传失败:', error)
+    throw error
   }
+}
 
 export default {
   request,

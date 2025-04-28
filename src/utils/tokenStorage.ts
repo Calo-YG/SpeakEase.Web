@@ -1,47 +1,88 @@
-  import type {TokenResponse} from '@/api/auth/auth'
-  import type {UserState} from "@/store/user/user"
-  
-  const TOKEN_KEY = 'user_token'
-  const USER_KEY = "user_info"
-  
-  export const TokenStorage = {
-    /** 保存 token 到 localStorage */
-    setToken(tokenInfo: TokenResponse): void {
-      localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenInfo));
-    },
-  
-    /** 从 localStorage 获取 token 信息 */
-    getToken(): TokenResponse | null {
-      const tokenString = localStorage.getItem(TOKEN_KEY);
-      try {
-        return tokenString ? JSON.parse(tokenString) as TokenResponse : null;
-      } catch {
-        return null;
-      }
-    },
-  
-    /** 获取 access token（常用于请求头） */
-    getAccessToken(): string | null {
-      const tokenInfo = this.getToken();
-      return tokenInfo?.token || null;
-    },
-  
-    /** 清除 token */
-    clear(): void {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY)
-    },
+import type { TokenResponse } from '@/api/auth/auth';
+import type { UserState } from "@/store/user/user";
 
-    setUserInfo(user:UserState){
+/** 本地存储键名常量 */
+const TOKEN_KEY = 'user_token';
+const USER_KEY = "user_info";
+
+/**
+ * Token 存储工具类
+ * 提供 token 和用户信息的本地存储管理
+ */
+export const TokenStorage = {
+  /**
+   * 保存 token 到 localStorage
+   * @param tokenInfo - token 信息对象
+   */
+  setToken(tokenInfo: TokenResponse): void {
+    try {
+      localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenInfo));
+    } catch (error) {
+      console.error('保存 token 失败:', error);
+      throw new Error('保存 token 失败');
+    }
+  },
+
+  /**
+   * 从 localStorage 获取 token 信息
+   * @returns token 信息对象或 null
+   */
+  getToken(): TokenResponse | null {
+    try {
+      const tokenString = localStorage.getItem(TOKEN_KEY);
+      return tokenString ? JSON.parse(tokenString) as TokenResponse : null;
+    } catch (error) {
+      console.error('获取 token 失败:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 获取 access token（常用于请求头）
+   * @returns access token 字符串或 null
+   */
+  getAccessToken(): string | null {
+    const tokenInfo = this.getToken();
+    return tokenInfo?.token || null;
+  },
+
+  /**
+   * 清除所有存储的用户信息
+   */
+  clear(): void {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch (error) {
+      console.error('清除存储失败:', error);
+    }
+  },
+
+  /**
+   * 保存用户信息到 localStorage
+   * @param user - 用户信息对象
+   */
+  setUserInfo(user: UserState): void {
+    try {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
-    },
-    getUserInfo():UserState | null{
-      const tokenString = localStorage.getItem(USER_KEY);
-      try {
-        return tokenString ? JSON.parse(tokenString) as UserState : null;
-      } catch {
-        return null;
-      }
+    } catch (error) {
+      console.error('保存用户信息失败:', error);
+      throw new Error('保存用户信息失败');
+    }
+  },
+
+  /**
+   * 从 localStorage 获取用户信息
+   * @returns 用户信息对象或 null
+   */
+  getUserInfo(): UserState | null {
+    try {
+      const userString = localStorage.getItem(USER_KEY);
+      return userString ? JSON.parse(userString) as UserState : null;
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      return null;
     }
   }
+};
   

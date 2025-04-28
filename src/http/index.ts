@@ -3,23 +3,58 @@ import axios from 'axios';
 import router from '@/router'; // 确保使用项目路由实例，而非 useRouter()  
 import { TokenStorage } from '@/utils/tokenStorage';
 import { notification } from 'ant-design-vue';
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { IResponseType } from '@/http/response';
 
-interface RefresheTokenRes{
-  refreshToken:string
+// 定义接口和类型
+interface ApiResponse<T = any> {
+  isSuccess: boolean;
+  message?: string;
+  data: T;
+}
+
+interface RefreshTokenResponse {
+  refreshToken: string;
+}
+
+interface FailedRequest {
+  resolve: (value?: string | PromiseLike<string>) => void;
+  reject: (reason?: any) => void;
+}
+
+interface AxiosConfig extends AxiosRequestConfig {
+  baseURL: string;
+  timeout: number;
+  headers?: Record<string, string>;
 }
 
 // 创建 Axios 实例
-const instance = axios.create({
+const createAxiosInstance = (config: AxiosConfig) => {
+  return axios.create({
+    baseURL: config.baseURL,
+    timeout: config.timeout,
+    headers: {
+      'Content-Type': 'application/json',
+      ...config.headers,
+    },
+  });
+};
+
+// 全局配置
+const defaultConfig: AxiosConfig = {
   baseURL: import.meta.env.VITE_API_BASE || 'https://api.example.com',
-  timeout: 10000,
-});
+  timeout: 10000, // 增加超时时间到10秒
+};
+
+// 创建实例
+const instance = createAxiosInstance(defaultConfig);
 
 // 刷新状态与队列
 let isRefreshing = false;
-let failedQueue: { resolve: (value?: string | PromiseLike<string>) => void; reject: (reason?: any) => void }[] = [];
+let failedQueue: FailedRequest[] = [];
 
 // 处理队列：根据刷新结果依次重试或拒绝
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
     else resolve(token || '');
@@ -29,96 +64,117 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 // 请求拦截：注入 Access Token
 instance.interceptors.request.use(
-  config => {
+  (config) => {
     const token = TokenStorage.getAccessToken();
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;  // 在请求头加上 Bearer Token&#8203;:contentReference[oaicite:6]{index=6}
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  error => Promise.reject(error)
+  (error) => {
+    console.error('请求拦截器错误:', error);
+    return Promise.reject(error);
+  }
 );
 
 // 刷新接口封装
-function refreshToken() {
-  return axios.post('api/auth/refresh', {
-    refreshToken: TokenStorage.getToken()?.refreshToken,  
-    id:TokenStorage.getUserInfo()?.userId    // 使用 Refresh Token 获取新 Access Token&#8203;:contentReference[oaicite:7]{index=7}
-  })
-  .then((res) => res.data.refreshToken);
+async function refreshToken(): Promise<string> {
+  try {
+    const response = await axios.post<ApiResponse<RefreshTokenResponse>>('api/auth/refresh', {
+      refreshToken: TokenStorage.getToken()?.refreshToken,
+      id: TokenStorage.getUserInfo()?.userId,
+    });
+    return response.data.data.refreshToken;
+  } catch (error) {
+    console.error('刷新Token失败:', error);
+    throw error;
+  }
 }
 
 // 响应拦截：业务错误与 Token 刷新
 instance.interceptors.response.use(
-  response => {
-    const res = response.data;
-    if (!res.isSuccess) {
-      notification.error({ message: '请求失败', description: res.message || '未知错误', duration: 1 });
-      return Promise.reject(res.message);
+  (response: AxiosResponse<IResponseType>) => {
+    const res = response.data
+    if (!res.success) {
+      notification.error({
+        message: '请求失败',
+        description: res.message || '未知错误',
+        duration: 1,
+      })
+      return Promise.reject(new Error(res.message))
     }
-    return res.data;
+    return res.data
   },
-  error => {
-    const originalRequest = error.config;
-    const status = error?.response?.status;
+  async (error) => {
+    const originalRequest = error.config
+    const status = error?.response?.status
 
     // 401: Access Token 失效，尝试刷新
     if (status === 401 && !originalRequest._retry) {
-      // 标记已重试，避免循环
-      originalRequest._retry = true;
-      // 若已有刷新请求，挂起当前请求
+      originalRequest._retry = true
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });        // 将请求加入队列&#8203;:contentReference[oaicite:8]{index=8}
-        }).then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return instance(originalRequest);
-        });
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return instance(originalRequest)
+          })
+          .catch((err) => {
+            return Promise.reject(err)
+          })
       }
 
-      // 开始刷新流程
-      isRefreshing = true;
-      return refreshToken()
-        .then(newToken => {
-          TokenStorage.setToken(newToken);        // 更新本地存储&#8203;:contentReference[oaicite:9]{index=9}
-          instance.defaults.headers.Authorization = `Bearer ${newToken}`;  // 更新默认头
-          processQueue(null, newToken);                 // 刷新成功，重试挂起请求&#8203;:contentReference[oaicite:10]{index=10}
-          return instance(originalRequest);
-        })
-        .catch(err => {
-          processQueue(err, null);                      // 刷新失败，拒绝所有挂起请求
-          TokenStorage.clear();                         // 清除本地 Token
-          router.push('/login');                        // 跳转登录页&#8203;:contentReference[oaicite:11]{index=11}
-          return Promise.reject(err);
-        })
-        .finally(() => {
-          isRefreshing = false;                         // 重置刷新状态
-        });
+      isRefreshing = true
+      try {
+        const response = await axios.post<IResponseType<RefreshTokenResponse>>(
+          'api/auth/refresh',
+          {
+            refreshToken: TokenStorage.getToken()?.refreshToken,
+            id: TokenStorage.getUserInfo()?.userId,
+          }
+        )
+        const newToken = response.data.data.refreshToken
+        TokenStorage.setToken({ token: newToken, refreshToken: newToken })
+        instance.defaults.headers.Authorization = `Bearer ${newToken}`
+        processQueue(null, newToken)
+        return instance(originalRequest)
+      } catch (err) {
+        processQueue(err, null)
+        TokenStorage.clear()
+        router.push('/login')
+        return Promise.reject(err)
+      } finally {
+        isRefreshing = false
+      }
     }
 
-    // 其他状态码统一处理
-    switch (status) {
-      case 400:
-        notification.error({ message: '请求参数错误', description: '请检查提交的数据是否正确', duration: 1 });
-        break;
-      case 403:
-        notification.warning({ message: '无权限', description: '你没有访问该资源的权限', duration: 1 });
-        break;
-      case 404:
-        notification.info({ message: '资源未找到', description: '请求的接口不存在', duration: 1 });
-        break;
-      case 500:
-        notification.error({ message: '服务器错误', description: '请稍后再试', duration: 1 });
-        break;
-      case 999:
-        notification.warning({message:'refresh token 过期',description:'请重新登录',duration:1})
-        break;  
-      default:
-        notification.error({ message: '请求异常', description: error?.message || '未知错误', duration: 1 });
-    }
-
-    return Promise.reject(error);
+    // 统一错误处理
+    handleErrorStatus(status, error)
+    return Promise.reject(error)
   }
-);
+)
+
+// 统一错误处理函数
+const handleErrorStatus = (status: number | undefined, error: any): void => {
+  const errorMessages = {
+    400: { message: '请求参数错误', description: '请检查提交的数据是否正确' },
+    403: { message: '无权限', description: '你没有访问该资源的权限' },
+    404: { message: '资源未找到', description: '请求的接口不存在' },
+    500: { message: '服务器错误', description: '请稍后再试' },
+    999: { message: 'refresh token 过期', description: '请重新登录' },
+  };
+
+  const errorConfig = errorMessages[status as keyof typeof errorMessages] || {
+    message: '请求异常',
+    description: error?.message || '未知错误',
+  };
+
+  notification.error({
+    ...errorConfig,
+    duration: 1,
+  });
+};
 
 export default instance;

@@ -12,13 +12,20 @@
         @finish="handleRegister"
       >
         <a-form-item label="昵称" name="userName">
-          <a-input v-model:value="form.userName" placeholder="请输入昵称" />
+          <a-input
+            v-model:value="form.userName"
+            placeholder="请输入昵称"
+            :maxLength="20"
+            allow-clear
+          />
         </a-form-item>
 
         <a-form-item label="用户名" name="userAccount">
           <a-input
             v-model:value="form.userAccount"
             placeholder="请输入用户名"
+            :maxLength="16"
+            allow-clear
           />
         </a-form-item>
 
@@ -26,11 +33,18 @@
           <a-input-password
             v-model:value="form.password"
             placeholder="请输入密码"
+            :maxLength="20"
+            allow-clear
           />
         </a-form-item>
 
         <a-form-item label="邮箱" name="email">
-          <a-input v-model:value="form.email" placeholder="请输入邮箱" />
+          <a-input
+            v-model:value="form.email"
+            placeholder="请输入邮箱"
+            :maxLength="50"
+            allow-clear
+          />
         </a-form-item>
 
         <a-form-item label="验证码" name="verificationCode">
@@ -38,6 +52,8 @@
             <a-input
               v-model:value="form.verificationCode"
               placeholder="请输入验证码"
+              :maxLength="4"
+              allow-clear
             />
             <a-image
               :src="codeBase64"
@@ -62,7 +78,7 @@
     <div class="column">
       <h2>已有账号？</h2>
       <p>返回登录页面开始你的旅程</p>
-      <a @click="goLogin">登录</a>
+      <a-button type="link" @click="goLogin">登录</a-button>
     </div>
   </div>
 </div>
@@ -91,14 +107,20 @@ const form = ref<CreateUserRequest>({
 });
 
 const rules = {
-  userName: [{ required: true, message: "请输入昵称", trigger: "blur" }],
+  userName: [
+    { required: true, message: "请输入昵称", trigger: "blur" },
+    { min: 2, max: 20, message: "昵称长度应为 2-20 个字符", trigger: "blur" },
+    { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/, message: "昵称只能包含中文、字母、数字和下划线", trigger: "blur" },
+  ],
   userAccount: [
     { required: true, message: "请输入用户名", trigger: "blur" },
     { min: 3, max: 16, message: "用户名长度应为 3-16 个字符", trigger: "blur" },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: "用户名只能包含字母、数字和下划线", trigger: "blur" },
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
     { min: 6, max: 20, message: "密码长度应为 6-20 个字符", trigger: "blur" },
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/, message: "密码必须包含大小写字母和数字", trigger: "blur" },
   ],
   email: [
     { required: true, message: "请输入邮箱", trigger: "blur" },
@@ -114,35 +136,43 @@ onMounted(() => {
   initVerify();
 });
 
-function handleRegister() {
-  loading.value = true;
-  formRef.value
-    .validate()
-    .then(() => {
-      register(form.value)
-        .then(() => {
-          openNotification("注册成功", "请返回登录页面进行登录");
-          router.push("/login");
-        })
-        .finally(() => (loading.value = false));
-    })
-    .finally(() => (loading.value = false));
+async function handleRegister() {
+  if (loading.value) return;
+  
+  try {
+    loading.value = true;
+    await formRef.value.validate();
+    
+    await register(form.value);
+    showNotification("success", "注册成功，请返回登录页面进行登录");
+    router.push("/login");
+  } catch (error: any) {
+    console.error('注册失败:', error);
+    showNotification("error", error.message || "注册失败，请重试");
+    refreshCaptcha();
+  } finally {
+    loading.value = false;
+  }
 }
 
-function initVerify() {
-  verify("Register").then((res) => {
+async function initVerify() {
+  try {
+    const res = await verify("Register");
     codeBase64.value = res.verificationCode;
     form.value.unquneId = res.uniqueId;
-  });
+  } catch (error) {
+    console.error('获取验证码失败:', error);
+    showNotification("error", "获取验证码失败，请重试");
+  }
 }
 
 function refreshCaptcha() {
   initVerify();
 }
 
-function openNotification(title: string, message: string) {
-  notification.open({
-    message: title,
+function showNotification(type: 'success' | 'error', message: string) {
+  notification[type]({
+    message: type === 'success' ? '成功' : '错误',
     description: message,
     duration: 2,
   });

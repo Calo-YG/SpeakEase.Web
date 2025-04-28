@@ -1,8 +1,9 @@
 // src/store/user.ts
 import { defineStore } from 'pinia'
 import { TokenStorage } from '@/utils/tokenStorage'
-import type {TokenResponse} from '@/api/auth/auth'
-import type {UserState} from '@/store/user/user'
+import type { TokenResponse } from '@/api/auth/auth'
+import type { UserState } from '@/store/user/user.d'
+import { notification } from 'ant-design-vue'
 
 export const useUserStore = defineStore('user', {
   state: (): UserState => ({
@@ -11,32 +12,79 @@ export const useUserStore = defineStore('user', {
     email: '',
     phone: '',
     avatar: '',
-    isAuthenticated:false
+    isAuthenticated: false
   }),
 
-  actions: {
-    setToken(data:TokenResponse){
-      TokenStorage.setToken(data)
-
-    },
-    // 设置用户信息（登录后）
-    setUserInfo(payload: Partial<UserState>) {
-      this.$patch(payload)
-
-      TokenStorage.setUserInfo({
-        userId: payload.userId || 0,
-        userName: payload.userName || '',
-        email: payload.email || '',
-        phone: payload.phone || '',
-        avatar: payload.avatar || '',
-        isAuthenticated:payload.isAuthenticated || false
-      })
-    },
-
-    // 清空所有信息（登出）
-    clearUserInfo() {
-      this.$reset()
-      TokenStorage.clear()
-    },
+  getters: {
+    // 获取用户完整信息
+    getUserInfo: (state): UserState => state,
+    
+    // 检查是否已登录
+    isLoggedIn: (state): boolean => state.isAuthenticated
   },
+
+  actions: {
+    // 设置token
+    setToken(data: TokenResponse) {
+      try {
+        TokenStorage.setToken(data)
+        this.isAuthenticated = true
+      } catch (error) {
+        console.error('设置token失败:', error)
+        notification.error({
+          message: '错误',
+          description: '设置token失败，请重试',
+          duration: 2
+        })
+      }
+    },
+
+    // 设置用户信息
+    setUserInfo(payload: Partial<UserState>) {
+      try {
+        // 更新store状态
+        this.$patch({
+          ...payload,
+          isAuthenticated: true
+        })
+
+        // 更新本地存储
+        TokenStorage.setUserInfo({
+          userId: payload.userId || 0,
+          userName: payload.userName || '',
+          email: payload.email || '',
+          phone: payload.phone || '',
+          avatar: payload.avatar || '',
+          isAuthenticated: true
+        })
+      } catch (error) {
+        console.error('设置用户信息失败:', error)
+        notification.error({
+          message: '错误',
+          description: '设置用户信息失败，请重试',
+          duration: 2
+        })
+      }
+    },
+
+    // 清空用户信息（登出）
+    clearUserInfo() {
+      try {
+        this.$reset()
+        TokenStorage.clear()
+        notification.success({
+          message: '提示',
+          description: '已成功退出登录',
+          duration: 1
+        })
+      } catch (error) {
+        console.error('清除用户信息失败:', error)
+        notification.error({
+          message: '错误',
+          description: '退出登录失败，请重试',
+          duration: 2
+        })
+      }
+    }
+  }
 })

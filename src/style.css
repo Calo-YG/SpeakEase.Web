@@ -1,4 +1,25 @@
 :root {
+  /* 主题变量 */
+  --primary-color: #1890ff;
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #f5222d;
+  --font-size-base: 14px;
+  --heading-color: rgba(0, 0, 0, 0.85);
+  --text-color: rgba(0, 0, 0, 0.65);
+  --text-color-secondary: rgba(0, 0, 0, 0.45);
+  --border-radius-base: 4px;
+  --border-color-base: #d9d9d9;
+  --box-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  /* 响应式断点 */
+  --screen-xs: 480px;
+  --screen-sm: 576px;
+  --screen-md: 768px;
+  --screen-lg: 992px;
+  --screen-xl: 1200px;
+  --screen-xxl: 1600px;
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -13,6 +34,98 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 基础样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: #f0f2f5;
+}
+
+#app {
+  height: 100%;
+  max-width: 1000%;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+}
+
+/* 响应式布局 */
+@media (max-width: var(--screen-xs)) {
+  :root {
+    --font-size-base: 12px;
+  }
+}
+
+@media (min-width: var(--screen-sm)) {
+  :root {
+    --font-size-base: 14px;
+  }
+}
+
+@media (min-width: var(--screen-md)) {
+  :root {
+    --font-size-base: 16px;
+  }
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateX(10px);
+  opacity: 0;
+}
+
+/* 工具类 */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mt-5 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mb-5 { margin-bottom: 2rem; }
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -20,14 +133,6 @@ a {
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -56,13 +161,6 @@ button:focus-visible {
 
 .card {
   padding: 2em;
-}
-
-#app {
-  max-width: 1000%;
-  margin: 0 auto;
-  padding: 0;
-  text-align: center;
 }
 
 @media (prefers-color-scheme: light) {

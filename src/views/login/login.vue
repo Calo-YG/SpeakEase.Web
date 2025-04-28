@@ -9,28 +9,33 @@
         :rules="rules"
         ref="formRef"
         layout="vertical"
-        @finish="handleLogin()"
+        @finish="handleLogin"
       >
-        <a-form-item label="用户名" name="username">
+        <a-form-item label="用户名" name="userAccount">
           <a-input
             v-model:value="form.userAccount"
             placeholder="请输入用户名"
-            has-feedback 
-            validate-status="warning"
+            :maxLength="16"
+            allow-clear
           />
         </a-form-item>
         <a-form-item label="密码" name="password">
           <a-input-password
             v-model:value="form.password"
             placeholder="请输入密码"
-            has-feedback 
-            validate-status="warning"
+            :maxLength="20"
+            allow-clear
           />
         </a-form-item>
 
-        <a-form-item label="验证码" name="captcha">
+        <a-form-item label="验证码" name="code">
           <div class="captcha-wrapper">
-            <a-input v-model:value="form.code" placeholder="请输入验证码"  has-feedback validate-status="warning"/>
+            <a-input
+              v-model:value="form.code"
+              placeholder="请输入验证码"
+              :maxLength="6"
+              allow-clear
+            />
             <a-image
               :src="codeBase64"
               alt="验证码"
@@ -52,7 +57,7 @@
     <div class="column">
       <h2>自然选择号欢迎您登舰！</h2>
       <p>如果你没有账号，你想要现在注册一个吗？</p>
-      <a href="#" @click="goRegister()">注册</a>
+      <a-button type="link" @click="goRegister">注册</a-button>
     </div>
   </div>
 </div>
@@ -62,21 +67,21 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { LoginRequest } from "@/api/auth/auth";
-import { login, verify } from "@/api/auth/index";
+import { login, verify } from "@/api/auth";
 import { notification } from "ant-design-vue";
-import { getUser} from "@/api/user/index"
+import { getUser} from "@/api/user"
 import { useUserStore} from "@/store/user/userStore"
 import type {UserState} from "@/store/user/user"
 
 const router = useRouter();
+const store = useUserStore()
+
 const form = ref<LoginRequest>({
   code: "",
   password: "",
   uniqueId: "",
   userAccount: "",
 });
-const store = useUserStore()
-
 const formRef = ref();
 const codeBase64 = ref("");
 const loading = ref(false);
@@ -85,13 +90,16 @@ const rules = {
   userAccount: [
     { required: true, message: "请输入用户名"},
     { min: 3, max: 16, message: "用户名长度应为 3-16 个字符"},
+    { pattern: /^[a-zA-Z0-9_]+$/, message: "用户名只能包含字母、数字和下划线"},
   ],
   password: [
     { required: true, message: "请输入密码"},
     { min: 6, max: 20, message: "密码长度应为 6-20 个字符"},
+    { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,20}$/, message: "密码必须包含大小写字母和数字"},
   ],
   code: [
     { required: true, message: "请输入验证码"},
+    { len: 6, message: "验证码长度应为 6 位"},
   ],
 };
 
@@ -99,49 +107,56 @@ onMounted(() => {
   initVerify();
 });
 
-function handleLogin() {
-  loading.value = true;
-  formRef.value
-    .validate()
-    .then(() => {
-      login(form.value)
-        .then(async (res) => {
-          store.setToken(res)
-          router.push('/index')
-          openNotification("success", "登录成功");
-          var useRes = await getUser()
-          const user:UserState = {
-              avatar:useRes.avatar,
-              email:useRes.email,
-              phone:useRes.phone,
-              userName:useRes.userName,
-              userId:useRes.userId,
-              isAuthenticated:true
-             }
-
-        })
-        .finally(() => {
-          loading.value = false;
-        });
-    })
-    .finally(() => {
-      loading.value = false;
-    });
+async function handleLogin() {
+  if (loading.value) return;
+  
+  try {
+    loading.value = true;
+    await formRef.value.validate();
+    
+    const res = await login(form.value);
+    store.setToken(res);
+    
+    // 获取用户信息
+    const userRes = await getUser();
+    const user:UserState = {
+      avatar:userRes.avatar,
+      email:userRes.email,
+      phone:userRes.phone,
+      userName:userRes.userName,
+      userId:userRes.userId,
+      isAuthenticated:true
+    };
+    
+    store.setUserInfo(user);
+    showNotification("success", "登录成功");
+    router.push('/index');
+  } catch (error: any) {
+    console.error('登录失败:', error);
+    showNotification("error", error.message || "登录失败，请重试");
+    refreshCaptcha();
+  } finally {
+    loading.value = false;
+  }
 }
 
-function initVerify() {
-  verify("Login").then((res) => {
+async function initVerify() {
+  try {
+    const res = await verify("Login");
     codeBase64.value = res.verificationCode;
     form.value.uniqueId = res.uniqueId;
-  });
+  } catch (error) {
+    console.error('获取验证码失败:', error);
+    showNotification("error", "获取验证码失败，请重试");
+  }
 }
 
 //通知提醒
-function openNotification(title: string, message: string) {
-  notification['success']({
-    message: title,
+function showNotification(type: 'success' | 'error', message: string) {
+  notification[type]({
+    message: type === 'success' ? '成功' : '错误',
     description: message,
-    duration: 1,
+    duration: 2,
   });
 }
 

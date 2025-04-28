@@ -6,12 +6,13 @@
             :rules="rules"
             @submit.prevent="submit"
             layout="vertical"
-            @finish="submit()"
         >
             <a-form-item label="旧密码" name="oldPassword">
                 <a-input-password
                     v-model:value="formData.oldPassword"
                     placeholder="请输入旧密码"
+                    :maxLength="20"
+                    allow-clear
                 />
             </a-form-item>
 
@@ -19,6 +20,8 @@
                 <a-input-password
                     v-model:value="formData.password"
                     placeholder="请输入新密码"
+                    :maxLength="20"
+                    allow-clear
                 />
             </a-form-item>
 
@@ -27,6 +30,7 @@
                     :before-upload="beforeUpload"
                     :custom-request="handleUpload"
                     :show-upload-list="false"
+                    accept="image/*"
                 >
                     <a-button icon="upload">点击上传头像</a-button>
                 </a-upload>
@@ -54,16 +58,14 @@ const formData = ref<UpdateUserRequest>({
     oldPassword: "",
     password: "",
 });
-const loading = ref(false)
-const avatarUrl = ref<string | null>(null)
-// 使用 v-model 语法糖优化 props 传递
-
-const props = defineProps<{ isOpen: boolean }>();
-const emit = defineEmits(["update:modelValue"]);
+const loading = ref(false);
+const avatarUrl = ref<string | null>(null);
 const formRef = ref();
+
+// 密码验证规则
 const passwordRules = [
     { required: true, message: "请输入密码" },
-    { min: 6, message: "密码长度至少6位" },
+    { min: 6, max: 20, message: "密码长度6-20位" },
     {
         pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]+$/,
         message: "密码必须包含字母和数字",
@@ -75,61 +77,76 @@ const rules = {
     password: passwordRules,
 };
 
-// 头像上传逻辑
-function beforeUpload(file: File) {
+// 头像上传前的验证
+function beforeUpload(file: File): boolean {
     const isImage = file.type.startsWith("image/");
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    
     if (!isImage) {
         notification.error({
             message: "错误",
             description: "只能上传图片文件",
         });
+        return false;
     }
-    return isImage;
-}
-
-function handleUpload({ file }: { file: File }) {
-    const formData = new FormData();
-    formData.append("file", file);
-
-     uploadFile.uploadFile(file, "/api/user/Uploadavatar")
-        .then((response: any) => {
-            avatarUrl.value = response.data; // 假设返回的 URL 是头像地址
-            notification.success({
-                message: "成功",
-                description: "头像上传成功",
-            });
-        })
-        .catch(() => {
-            notification.error({
-                message: "错误",
-                description: "头像上传失败",
-            });
+    if (!isLt2M) {
+        notification.error({
+            message: "错误",
+            description: "图片大小不能超过 2MB",
         });
+        return false;
+    }
+    return true;
 }
 
-function submit() {
-    loading.value = true;
-    formRef.value
-        .validateFields()
-        .then(() => {
-            modifyPassword(formData.value).then(() => {
-                TokenStorage.clear();
-                emit("update:modelValue", false); // 关闭弹窗
-                router.push("/login");
-                notification.success({
-                    message: "成功",
-                    description: "修改密码成功",
-                    duration: 1,
-                });
-            });
-        })
-        .catch((error: any) => {
-            console.error("Validation failed:", error);
-        })
-        .finally(() => {
-            loading.value = false;
+// 处理头像上传
+async function handleUpload({ file }: { file: File }): Promise<void> {
+    try {
+        const response = await uploadFile.uploadFile(file, "/api/user/Uploadavatar");
+        avatarUrl.value = response.data;
+        notification.success({
+            message: "成功",
+            description: "头像上传成功",
         });
+    } catch (error) {
+        console.error("头像上传失败:", error);
+        notification.error({
+            message: "错误",
+            description: "头像上传失败，请重试",
+        });
+    }
 }
+
+// 提交表单
+async function submit(): Promise<void> {
+    try {
+        loading.value = true;
+        await formRef.value.validateFields();
+        
+        await modifyPassword(formData.value);
+        TokenStorage.clear();
+        emit("update:modelValue", false);
+        
+        notification.success({
+            message: "成功",
+            description: "修改密码成功，请重新登录",
+            duration: 1,
+        });
+        
+        router.push("/login");
+    } catch (error) {
+        console.error("表单提交失败:", error);
+        notification.error({
+            message: "错误",
+            description: "修改密码失败，请重试",
+        });
+    } finally {
+        loading.value = false;
+    }
+}
+
+const props = defineProps<{ isOpen: boolean }>();
+const emit = defineEmits(["update:modelValue"]);
 </script>
 
 <style scoped>

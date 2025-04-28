@@ -7,26 +7,67 @@ export const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/login",
-    name: "login",
+    name: "Login",
     component: () => import("@/views/login/login.vue"),
     meta: {
       title: "登录",
+      requiresAuth: false,
     },
   },
   {
     path: "/register",
-    name: "register",
+    name: "Register",
     component: () => import("@/views/register/register.vue"),
     meta: {
       title: "注册",
+      requiresAuth: false,
     },
   },
   {
     path: "/index",
-    name: "首页",
+    name: "Index",
     component: () => import("@/components/layout/index.vue"),
     meta: {
-      title: "注册",
+      title: "首页",
+      requiresAuth: true,
     },
-  }
+    children: [
+      {
+        path: "",
+        name: "Home",
+        component: () => import("@/views/home/home.vue"),
+        meta: {
+          title: "首页",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "profile",
+        name: "Profile",
+        component: () => import("@/views/profile/profile.vue"),
+        meta: {
+          title: "个人中心",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "settings",
+        name: "Settings",
+        component: () => import("@/views/settings/settings.vue"),
+        meta: {
+          title: "设置",
+          requiresAuth: true,
+        },
+      },
+    ],
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: () => import("@/views/error/404.vue"),
+    meta: {
+      title: "404",
+      requiresAuth: false,
+    },
+  },
 ];

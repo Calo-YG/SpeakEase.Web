@@ -4,7 +4,13 @@
     <div class="main-container">
       <Header />
       <div class="main-content">
-        <router-view />
+        <div class="content-wrapper">
+          <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </div>
       </div>
     </div>
   </div>
@@ -25,10 +31,10 @@ import Sidebar from "@/components/layout/sidebar.vue";
 .layout-container {
   display: flex;
   height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   position: relative;
   overflow: hidden;
-  width:100%;
+  width: 100%;
 }
 
 .layout-container::after {
@@ -48,6 +54,7 @@ import Sidebar from "@/components/layout/sidebar.vue";
   flex-direction: column;
   z-index: 1;
   background-color: transparent;
+  overflow: hidden;
 }
 
 .main-container > .main-header {
@@ -70,14 +77,52 @@ import Sidebar from "@/components/layout/sidebar.vue";
   align-items: flex-start;
 }
 
-/* router-view 包裹层，可增强内容的卡片感 */
-.main-content > * {
+.content-wrapper {
   width: 100%;
   max-width: 1200px;
-  background: #fff;
-  border-radius: 12px;
+  min-height: calc(100vh - 112px);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
 }
 
+/* 路由切换动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 滚动条样式 */
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>

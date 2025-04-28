@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { getUser } from "@/api/user/index";
+import { getUser } from "@/api/user";
 import type { UserResponse } from "@/api/user/user";
 
 const baseurl = import.meta.env.VITE_API_BASE;
