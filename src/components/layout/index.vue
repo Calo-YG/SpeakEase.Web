@@ -1,8 +1,8 @@
 <template>
   <div class="layout-container">
-    <Sidebar />
-    <div class="main-container">
-      <Header />
+    <Sidebar v-model="isCollapsed" />
+    <div class="main-container" :class="{ 'sidebar-collapsed': isCollapsed }">
+      <Header :is-collapsed="isCollapsed" @toggle-sidebar="toggleSidebar" />
       <div class="main-content">
         <div class="content-wrapper">
           <router-view v-slot="{ Component }">
@@ -21,7 +21,7 @@ import Header from "@/components/layout/header.vue";
 import Sidebar from "@/components/layout/sidebar.vue";
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
-import { onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 // 配置 NProgress
@@ -34,6 +34,18 @@ NProgress.configure({
 });
 
 const router = useRouter();
+const isCollapsed = ref(false);
+
+// 处理窗口大小变化
+function handleResize() {
+  if (window.innerWidth <= 768) {
+    isCollapsed.value = true;
+  }
+}
+
+function toggleSidebar() {
+  isCollapsed.value = !isCollapsed.value;
+}
 
 // 注册路由钩子
 const removeRouterGuard = router.beforeEach((to, from, next) => {
@@ -45,8 +57,14 @@ router.afterEach(() => {
   NProgress.done();
 });
 
+onMounted(() => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
+});
+
 onUnmounted(() => {
-  removeRouterGuard(); // 清理路由守卫
+  removeRouterGuard();
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
@@ -60,9 +78,9 @@ onUnmounted(() => {
 .layout-container {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f6f8fc 0%, #e9f0f8 50%, #dce7f3 100%);
+  background: var(--bg-color);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   width: 100%;
 }
 
@@ -70,7 +88,11 @@ onUnmounted(() => {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(22, 119, 255, 0.05) 100%);
+  background: linear-gradient(135deg, 
+    var(--primary-bg) 0%, 
+    var(--component-bg) 50%, 
+    var(--border-secondary) 100%
+  );
   width: 60%;
   height: 100%;
   clip-path: polygon(0 100%, 0 0, 100% 0, 70% 100%);
@@ -81,17 +103,20 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  z-index: 1;
-  background-color: transparent;
-  overflow: hidden;
   margin-left: 240px;
-  transition: margin-left 0.3s;
+  transition: margin-left 0.3s ease;
+  position: relative;
+  min-height: 100vh;
+}
+
+.main-container.sidebar-collapsed {
+  margin-left: 64px;
 }
 
 .main-container > .main-header {
   height: 64px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: var(--component-bg);
+  box-shadow: 0 2px 8px rgba(var(--shadow-color-rgb), 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,34 +125,28 @@ onUnmounted(() => {
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  background-color: transparent;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+  padding: 16px;
+  overflow: hidden;
+  position: relative;
 }
 
 .content-wrapper {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--component-bg);
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  min-height: calc(100vh - 88px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 24px;
+  min-height: calc(100vh - 96px);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  border: 1px solid rgba(var(--border-color-rgb), 0.1);
 }
 
 /* 自定义 NProgress 样式 */
 :global(#nprogress .bar) {
-  background: #1677ff !important;
+  background: var(--primary-color) !important;
   height: 3px;
 }
 
 :global(#nprogress .peg) {
-  box-shadow: 0 0 10px #1677ff, 0 0 5px #1677ff;
+  box-shadow: 0 0 10px var(--primary-color), 0 0 5px var(--primary-color);
 }
 
 /* 路由切换动画 */
@@ -147,8 +166,12 @@ onUnmounted(() => {
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background: rgba(22, 119, 255, 0.2);
+  background: var(--border-color);
   border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .main-content::-webkit-scrollbar-track {
@@ -156,30 +179,23 @@ onUnmounted(() => {
 }
 
 /* 响应式布局 */
-@media (max-width: 1600px) {
-  .content-wrapper {
-    max-width: 1200px;
-  }
-}
-
 @media (max-width: 1200px) {
   .content-wrapper {
-    max-width: 960px;
+    padding: 20px;
+  }
+  
+  .main-content {
+    padding: 12px;
   }
 }
 
 @media (max-width: 992px) {
-  .main-container {
-    margin-left: 80px;
+  .content-wrapper {
+    padding: 16px;
   }
   
   .main-content {
     padding: 8px;
-  }
-  
-  .content-wrapper {
-    padding: 16px;
-    border-radius: 8px;
   }
 }
 
@@ -188,13 +204,29 @@ onUnmounted(() => {
     margin-left: 0;
   }
   
+  .main-container.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
+  .main-content {
+    padding: 8px;
+  }
+  
+  .content-wrapper {
+    padding: 12px;
+    border-radius: 8px;
+    min-height: calc(100vh - 80px);
+  }
+}
+
+@media (max-width: 576px) {
   .main-content {
     padding: 4px;
   }
   
   .content-wrapper {
-    padding: 12px;
-    border-radius: 6px;
+    padding: 8px;
+    border-radius: 4px;
   }
 }
 </style>

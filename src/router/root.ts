@@ -34,10 +34,55 @@ export const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "",
-        name: "Home",
-        component: () => import("@/views/home/home.vue"),
+        name: "Dashboard",
+        component: () => import("@/views/dashboard/index.vue"),
         meta: {
-          title: "首页",
+          title: "学习概览",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "vocabulary",
+        name: "Vocabulary",
+        component: () => import("@/views/vocabulary/index.vue"),
+        meta: {
+          title: "词汇学习",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "listening",
+        name: "Listening",
+        component: () => import("@/views/listening/index.vue"),
+        meta: {
+          title: "听力训练",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "speaking",
+        name: "Speaking",
+        component: () => import("@/views/speaking/index.vue"),
+        meta: {
+          title: "口语练习",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "reading",
+        name: "Reading",
+        component: () => import("@/views/reading/index.vue"),
+        meta: {
+          title: "阅读理解",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "practice",
+        name: "Practice",
+        component: () => import("@/views/practice/index.vue"),
+        meta: {
+          title: "每日练习",
           requiresAuth: true,
         },
       },
@@ -55,7 +100,7 @@ export const routes: Array<RouteRecordRaw> = [
         name: "Settings",
         component: () => import("@/views/settings/settings.vue"),
         meta: {
-          title: "设置",
+          title: "系统设置",
           requiresAuth: true,
         },
       },

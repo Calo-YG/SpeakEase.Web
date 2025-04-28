@@ -101,6 +101,10 @@ const codeBase64 = ref("");
 const loading = ref(false);
 const showPassword = ref(false);
 
+onMounted(() => {
+  initVerify();
+});
+
 const validateForm = () => {
   let isValid = true;
   errors.value = {

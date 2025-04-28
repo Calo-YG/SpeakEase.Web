@@ -1,12 +1,20 @@
 <template>
   <div class="header-bar">
     <div class="header-left">
+      <div class="menu-trigger" @click="$emit('toggle-sidebar')">
+        <menu-fold-outlined v-if="!isCollapsed" class="icon" />
+        <menu-unfold-outlined v-else class="icon" />
+      </div>
       <div class="breadcrumb">
         <span class="current-page">{{ currentRoute }}</span>
       </div>
     </div>
     <div class="header-right">
       <div class="user-section">
+        <div class="theme-switch" @click="toggleTheme">
+          <bulb-outlined v-if="isDarkMode" class="icon" />
+          <check-outlined v-else class="icon" />
+        </div>
         <div class="notification-icon" @click="showNotifications">
           <span class="badge" v-if="notificationCount > 0">{{ notificationCount }}</span>
           <bell-outlined class="icon" />
@@ -36,7 +44,7 @@
           </div>
         </div>
 
-        <a href="https://github.com/your-repo" target="_blank" class="github-link">
+        <a href="https://github.com/Calo-YG/SpeakEase" target="_blank" class="github-link">
           <github-outlined class="icon" />
         </a>
       </div>
@@ -56,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { TokenStorage } from "@/utils/tokenStorage";
 import type { UserState } from "@/store/user/user";
@@ -70,7 +78,19 @@ import {
   DownOutlined,
   GithubOutlined,
   CloseOutlined,
+  CheckOutlined,
+  BulbOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons-vue';
+
+defineProps<{
+  isCollapsed: boolean
+}>();
+
+defineEmits<{
+  (e: 'toggle-sidebar'): void
+}>();
 
 const router = useRouter();
 const route = useRoute();
@@ -81,28 +101,47 @@ const store = ref<UserState | null>(null);
 const notificationCount = ref(5);
 const defaultAvatar = '/src/assets/default-avatar.png';
 const baseUrl = import.meta.env.VITE_API_BASE || '';
+const isDarkMode = ref(localStorage.getItem('theme') === 'dark');
 
 const currentRoute = computed(() => {
   const path = route.path;
   return path === '/' ? '首页' : path.split('/')[1];
 });
 
-// 处理头像 URL
 const avatarUrl = computed(() => {
   if (!store.value?.avatar) return defaultAvatar;
-  
-  // 检查是否是完整的 URL
-  if (store.value.avatar.startsWith('http://') || store.value.avatar.startsWith('https://')) {
-    return store.value.avatar;
-  }
-  
-  // 如果不是完整 URL，拼接基础路径
-  return `${baseUrl}${store.value.avatar}`;
+  return store.value.avatar.startsWith('http') ? store.value.avatar : `${baseUrl}${store.value.avatar}`;
 });
 
 onMounted(() => {
   store.value = TokenStorage.getUserInfo();
+  initTheme();
+  document.addEventListener('click', handleClickOutside);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.user-dropdown')) {
+    isDropdownOpen.value = false;
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  isDarkMode.value = savedTheme === 'dark';
+}
+
+function toggleTheme() {
+  isDarkMode.value = !isDarkMode.value;
+  const newTheme = isDarkMode.value ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+}
 
 function setModal1Visible() {
   visible.value = !visible.value;
@@ -123,39 +162,59 @@ function closeModal() {
   open.value = false;
 }
 
-function toggleDropdown() {
+function toggleDropdown(event: Event) {
+  event.stopPropagation();
   isDropdownOpen.value = !isDropdownOpen.value;
 }
 
 function showNotifications() {
-  // 实现通知功能
   console.log('显示通知');
 }
 </script>
 
 <style scoped>
 .header-bar {
-  height: 64px;
-  padding: 0 24px;
-  background: rgba(255, 255, 255, 0.9);
+  height: 56px;
+  padding: 0 16px;
+  background: var(--header-bg);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  position: relative;
-  z-index: 10;
+  border-bottom: 1px solid rgba(var(--border-color-rgb), 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 99;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border-radius: 4px;
+  
+  &:hover {
+    background: var(--menu-item-hover);
+  }
+  
+  .icon {
+    font-size: 16px;
+  }
 }
 
 .current-page {
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-color);
 }
 
 .header-right {
@@ -169,39 +228,47 @@ function showNotifications() {
   gap: 24px;
 }
 
+.theme-switch,
 .notification-icon {
-  position: relative;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+  position: relative;
   
-  .badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: #ff4d4f;
-    color: white;
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    min-width: 20px;
-    text-align: center;
+  &:hover {
+    background: var(--menu-item-hover);
   }
+}
+
+.notification-icon .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--error-color);
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
 }
 
 .user-dropdown {
   position: relative;
-  cursor: pointer;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
   transition: all 0.3s;
   
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--menu-item-hover);
   }
 }
 
@@ -214,12 +281,12 @@ function showNotifications() {
 
 .username {
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--text-color);
 }
 
 .dropdown-icon {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   transition: transform 0.3s;
   
   &.rotate {
@@ -229,15 +296,16 @@ function showNotifications() {
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   right: 0;
-  background: white;
+  background: var(--component-bg);
   border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px var(--shadow-color);
   padding: 8px;
   min-width: 160px;
-  margin-top: 8px;
   animation: slideDown 0.3s ease;
+  border: 1px solid rgba(var(--border-color-rgb), 0.1);
+  z-index: 1000;
 }
 
 .menu-item {
@@ -250,40 +318,34 @@ function showNotifications() {
   transition: all 0.3s;
   
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--menu-item-hover);
   }
 }
 
 .menu-icon {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .divider {
   height: 1px;
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(var(--border-color-rgb), 0.1);
   margin: 8px 0;
 }
 
 .icon {
   font-size: 18px;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s;
-  
-  &:hover {
-    color: #1677ff;
-  }
+  color: var(--text-secondary);
 }
 
 .github-link {
   display: flex;
   align-items: center;
-  color: #666;
+  color: var(--text-secondary);
   transition: color 0.3s;
   
   &:hover {
-    color: #1677ff;
+    color: var(--primary-color);
   }
 }
 
@@ -293,7 +355,7 @@ function showNotifications() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--modal-mask);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -301,7 +363,7 @@ function showNotifications() {
 }
 
 .modal-content {
-  background: white;
+  background: var(--component-bg);
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
@@ -313,22 +375,23 @@ function showNotifications() {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(var(--border-color-rgb), 0.1);
   
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
+    color: var(--text-color);
   }
 }
 
 .close-icon {
   font-size: 16px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
   
   &:hover {
-    color: #ff4d4f;
+    color: var(--error-color);
   }
 }
 
@@ -354,7 +417,7 @@ function showNotifications() {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .header-bar {
     padding: 0 16px;
   }
@@ -363,12 +426,77 @@ function showNotifications() {
     gap: 16px;
   }
   
-  .username {
+  .current-page {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-bar {
+    padding: 0 12px;
+  }
+  
+  .menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .user-section {
+    gap: 12px;
+  }
+  
+  .username,
+  .github-link {
     display: none;
   }
   
+  .user-info {
+    padding: 4px;
+  }
+  
   .dropdown-menu {
-    right: -100%;
+    right: -12px;
+  }
+  
+  .notification-icon .badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-bar {
+    padding: 0 8px;
+  }
+  
+  .user-section {
+    gap: 8px;
+  }
+  
+  .current-page {
+    font-size: 14px;
+  }
+  
+  .theme-switch,
+  .notification-icon {
+    padding: 4px;
+  }
+  
+  .icon {
+    font-size: 16px;
+  }
+  
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .modal-content {
+    width: 90%;
+    margin: 0 16px;
   }
 }
 </style>
