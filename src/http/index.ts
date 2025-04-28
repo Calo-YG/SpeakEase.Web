@@ -2,9 +2,10 @@
 import axios from 'axios';
 import router from '@/router'; // 确保使用项目路由实例，而非 useRouter()  
 import { TokenStorage } from '@/utils/tokenStorage';
-import { notification } from 'ant-design-vue';
+import { message, notification } from 'ant-design-vue';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiResponse } from '@/http/response';
+import { describe } from 'node:test';
 
 // 定义接口和类型
 
@@ -160,6 +161,7 @@ const handleErrorStatus = (status: number | undefined, error: any): void => {
     404: { message: '资源未找到', description: '请求的接口不存在' },
     500: { message: '服务器错误', description: '请稍后再试' },
     999: { message: 'refresh token 过期', description: '请重新登录' },
+    499: {message:'友好提示',describe:''}
   };
 
   const errorConfig = errorMessages[status as keyof typeof errorMessages] || {

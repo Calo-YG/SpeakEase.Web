@@ -25,7 +25,7 @@ router.beforeEach(async (to, from, next) => {
   if (token && userInfo) {
     if (to.name === "Login" || to.name === "Register") {
       // 已登录用户访问登录/注册页，重定向到首页
-      next({ name: "Home" });
+      next({ name: "Dashboard" });
     } else {
       // 更新用户状态
       if (!userStore.isAuthenticated) {
