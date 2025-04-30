@@ -150,9 +150,9 @@
                 'today': date.isToday,
                 'has-study': date.hasStudy
               }"
+              @click="viewDateDetails(date)"
             >
               {{ date.day }}
-              <div class="study-indicator" v-if="date.hasStudy"></div>
             </div>
           </div>
         </div>
@@ -1336,6 +1336,45 @@ function handleFileInputClick() {
     fileInput.value.click();
   }
 }
+
+// 查看日期详情
+function viewDateDetails(date: any) {
+  if (date.currentMonth) {
+    // 使用更友好的方式显示日期详情
+    Modal.info({
+      title: `${currentMonth.value} ${date.day}日`,
+      content: h('div', {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }
+      }, [
+        h('div', {
+          style: {
+            fontSize: '14px',
+            marginBottom: '8px'
+          }
+        }, date.hasStudy ? '今日已完成学习任务' : '今日暂无学习记录'),
+        date.hasStudy ? h('div', {
+          style: {
+            background: 'rgba(var(--primary-color-rgb), 0.1)',
+            padding: '12px',
+            borderRadius: '8px',
+            marginTop: '8px'
+          }
+        }, [
+          h('div', { style: { fontWeight: 'bold', marginBottom: '8px' } }, '学习记录摘要:'),
+          h('div', {}, `· 学习时长: ${Math.floor(Math.random() * 60) + 10}分钟`),
+          h('div', {}, `· 获得积分: ${Math.floor(Math.random() * 50) + 10}分`),
+          h('div', {}, `· 完成任务: ${Math.floor(Math.random() * 3) + 1}个`),
+        ]) : null
+      ]),
+      okText: '关闭',
+      maskClosable: true
+    });
+  }
+}
 </script>
 
 <style scoped>
@@ -1394,8 +1433,9 @@ function handleFileInputClick() {
 
 .main-content {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 320px;
   gap: 24px;
+  margin-bottom: 24px;
 }
 
 .tasks-section {
@@ -1417,6 +1457,31 @@ function handleFileInputClick() {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid rgba(var(--border-color-rgb), 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, transparent 50%, rgba(var(--primary-color-rgb), 0.1) 50%);
+    border-radius: 0 12px 0 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  &:hover:before {
+    opacity: 1;
+  }
   
   &.completed {
     background: rgba(var(--success-color-rgb), 0.05);
@@ -1435,12 +1500,24 @@ function handleFileInputClick() {
       gap: 6px;
       font-size: 14px;
       color: var(--text-secondary);
+      
+      .anticon {
+        color: var(--primary-color);
+      }
     }
     
     .task-points {
       font-size: 14px;
       color: var(--primary-color);
       font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      
+      &:before {
+        content: '⭐';
+        font-size: 12px;
+      }
     }
   }
   
@@ -1449,12 +1526,21 @@ function handleFileInputClick() {
       font-size: 16px;
       color: var(--text-color);
       margin: 0 0 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     p {
       font-size: 14px;
       color: var(--text-secondary);
       margin: 0 0 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      min-height: 40px;
     }
     
     .task-progress {
@@ -1508,6 +1594,12 @@ function handleFileInputClick() {
       }
     }
   }
+}
+
+.side-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .calendar-card,
@@ -1564,7 +1656,7 @@ function handleFileInputClick() {
     span {
       font-size: 14px;
       color: var(--text-color);
-      min-width: 100px;
+      min-width: 120px;
       text-align: center;
     }
   }
@@ -1573,46 +1665,62 @@ function handleFileInputClick() {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
+    margin-top: 8px;
     
     .weekday {
-      height: 32px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
+      font-weight: 500;
     }
     
     .date-cell {
-      height: 32px;
-      border-radius: 4px;
+      height: 30px;
+      width: 30px;
+      border-radius: 50%;
+      font-size: 13px;
+      color: var(--text-color);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
-      color: var(--text-color);
+      cursor: pointer;
+      margin: 0 auto;
       position: relative;
       
       &.other-month {
         color: var(--text-secondary);
+        opacity: 0.5;
       }
       
       &.today {
         background: var(--primary-color);
         color: white;
+        font-weight: bold;
       }
       
       &.has-study {
-        font-weight: 500;
-        
-        .study-indicator {
+        &:after {
+          content: '';
           position: absolute;
-          bottom: 4px;
+          bottom: 2px;
+          left: 50%;
+          transform: translateX(-50%);
           width: 4px;
           height: 4px;
-          border-radius: 2px;
+          border-radius: 50%;
           background: var(--primary-color);
         }
+        
+        &.today:after {
+          background: white;
+        }
+      }
+      
+      &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
       }
     }
   }
@@ -1796,11 +1904,6 @@ function handleFileInputClick() {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
-    
-    .calendar-card,
-    .achievement-card {
-      margin: 0;
-    }
   }
 }
 

@@ -19,6 +19,12 @@
           <div class="progress" :style="{ width: progressPercentage + '%' }"></div>
         </div>
       </div>
+      <div class="manage-words">
+        <a-button type="primary" @click="goToWordManage">
+          <template #icon><edit-outlined /></template>
+          单词管理
+        </a-button>
+      </div>
     </div>
 
     <div class="main-content">
@@ -116,7 +122,10 @@ import {
   CheckOutlined,
   ReadOutlined,
   SyncOutlined,
+  EditOutlined,
 } from '@ant-design/icons-vue';
+import { Button } from 'ant-design-vue';
+import { useRouter } from 'vue-router';
 
 interface Translation {
   pos: string;
@@ -177,6 +186,9 @@ const progressPercentage = computed(() => (masteredCount.value / totalWords.valu
 const currentWord = computed(() => words.value[currentWordIndex.value]);
 const currentReviewWord = computed(() => reviewWords.value[reviewedCount.value]);
 
+// 添加路由
+const router = useRouter();
+
 // 方法
 function setCurrentLevel(level: string) {
   currentLevel.value = level;
@@ -223,6 +235,10 @@ function handleReview(result: 'remember' | 'forget') {
     isReviewMode.value = false;
     // TODO: 显示复习完成的统计信息
   }
+}
+
+function goToWordManage() {
+  router.push('/index/wordmanage');
 }
 </script>
 
@@ -299,6 +315,10 @@ function handleReview(result: 'remember' | 'forget') {
       transition: width 0.3s ease;
     }
   }
+}
+
+.manage-words {
+  text-align: right;
 }
 
 .word-card {

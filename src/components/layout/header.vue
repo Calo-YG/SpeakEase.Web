@@ -28,9 +28,9 @@
           </div>
           
           <div class="dropdown-menu" v-if="isDropdownOpen">
-            <div class="menu-item" @click="setModal1Visible">
+            <div class="menu-item" @click="navigateToProfile">
               <user-outlined class="menu-icon" />
-              <span>个人信息</span>
+              <span>个人中心</span>
             </div>
             <div class="menu-item" @click="openModal">
               <key-outlined class="menu-icon" />
@@ -169,6 +169,11 @@ function toggleDropdown(event: Event) {
 
 function showNotifications() {
   console.log('显示通知');
+}
+
+function navigateToProfile() {
+  router.push('/index/profile');
+  isDropdownOpen.value = false;
 }
 </script>
 

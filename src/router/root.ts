@@ -51,6 +51,15 @@ export const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "wordmanage",
+        name: "WordManage",
+        component: () => import("@/views/vocabulary/wordmanage.vue"),
+        meta: {
+          title: "单词管理",
+          requiresAuth: true,
+        },
+      },
+      {
         path: "listening",
         name: "Listening",
         component: () => import("@/views/listening/index.vue"),

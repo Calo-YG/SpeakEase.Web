@@ -162,6 +162,10 @@ export interface UserSettingUpdateRequest {
      * 是否展示学习进度
      */
     showLearningProgress?: boolean;
+    /**
+     * 背景图
+     */
+    backgroundImage?: string;
 }
 
 /**
@@ -208,4 +212,8 @@ export interface UserSettingResponse {
      * 是否展示学习进度
      */
     showLearningProgress?: boolean;
+    /**
+     * 背景图
+     */
+    backgroundImage?: string;
 }
