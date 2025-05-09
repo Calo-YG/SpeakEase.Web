@@ -105,6 +105,33 @@ export const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "progress",
+        name: "Progress",
+        component: () => import("@/views/progress/index.vue"),
+        meta: {
+          title: "学习进度",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "community",
+        name: "Community",
+        component: () => import("@/views/community/index.vue"),
+        meta: {
+          title: "学习社区",
+          requiresAuth: true,
+        },
+      },
+      {
+        path: "ai-assistant",
+        name: "AIAssistant",
+        component: () => import("@/views/ai-assistant/index.vue"),
+        meta: {
+          title: "AI学习助手",
+          requiresAuth: true,
+        },
+      },
+      {
         path: "settings",
         name: "Settings",
         component: () => import("@/views/settings/settings.vue"),
